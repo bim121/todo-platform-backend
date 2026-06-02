@@ -12,7 +12,7 @@ builder.Host.UseSerilog((context, services, configuration) =>
         .WriteTo.Console());
 
 builder.Services.AddApplication();
-builder.Services.AddInfrastructure();
+builder.Services.AddInfrastructure(builder.Configuration);
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
