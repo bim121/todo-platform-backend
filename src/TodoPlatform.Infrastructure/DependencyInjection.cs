@@ -1,7 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using TodoPlatform.Application.Interfaces;
 using TodoPlatform.Infrastructure.Persistence;
+using TodoPlatform.Infrastructure.Repositories;
 
 namespace TodoPlatform.Infrastructure;
 
@@ -16,6 +18,8 @@ public static class DependencyInjection
 
         services.AddDbContext<AppDbContext>(options =>
             options.UseNpgsql(connectionString));
+
+        services.AddScoped<ITodoRepository, TodoRepository>();
 
         return services;
     }

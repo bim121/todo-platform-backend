@@ -1,6 +1,7 @@
 using Serilog;
 using TodoPlatform.Application;
 using TodoPlatform.Infrastructure;
+using TodoPlatform.Infrastructure.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -35,6 +36,8 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+
+await app.EnsureDevDatabaseAsync();
 
 app.UseSerilogRequestLogging();
 

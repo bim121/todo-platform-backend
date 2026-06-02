@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using TodoPlatform.Application.Services;
 
 namespace TodoPlatform.Application;
 
@@ -6,7 +7,7 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddApplication(this IServiceCollection services)
     {
-        // MediatR, FluentValidation — Phase B-03
+        services.AddScoped<ITodoService, TodoService>();
         return services;
     }
 }

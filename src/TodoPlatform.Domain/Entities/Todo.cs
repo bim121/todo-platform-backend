@@ -50,4 +50,19 @@ public class Todo : Entity
 
         Title = title.Trim();
     }
+
+    public void SetCompleted(bool completed)
+    {
+        Completed = completed;
+        if (completed)
+            Status = TodoStatus.Done;
+        else if (Status == TodoStatus.Done)
+            Status = TodoStatus.Todo;
+    }
+
+    public void UpdateStatus(TodoStatus status)
+    {
+        Status = status;
+        Completed = status == TodoStatus.Done;
+    }
 }
