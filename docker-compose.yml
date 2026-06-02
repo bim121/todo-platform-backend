@@ -1,0 +1,14 @@
+# Stub — полный stack в Phase B-08
+# services: api, postgres, redis, rabbitmq, keycloak
+
+version: "3.9"
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: todo
+      POSTGRES_PASSWORD: todo
+      POSTGRES_DB: tododb
+    ports:
+      - "5432:5432"
+    profiles: ["full"]
