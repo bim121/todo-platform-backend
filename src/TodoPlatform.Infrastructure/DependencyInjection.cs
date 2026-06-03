@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using TodoPlatform.Application.Interfaces;
 using TodoPlatform.Infrastructure.Persistence;
 using TodoPlatform.Infrastructure.Repositories;
+using TodoPlatform.Infrastructure.Security;
 
 namespace TodoPlatform.Infrastructure;
 
@@ -20,6 +21,8 @@ public static class DependencyInjection
             options.UseNpgsql(connectionString));
 
         services.AddScoped<ITodoRepository, TodoRepository>();
+        services.AddScoped<IUserRepository, UserRepository>();
+        services.AddSingleton<IPasswordHasher, Sha256PasswordHasher>();
 
         return services;
     }
