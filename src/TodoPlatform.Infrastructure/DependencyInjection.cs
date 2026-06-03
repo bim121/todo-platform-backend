@@ -20,8 +20,7 @@ public static class DependencyInjection
         services.AddDbContext<AppDbContext>(options =>
             options.UseNpgsql(connectionString));
 
-        services.AddScoped<ITodoRepository, TodoRepository>();
-        services.AddScoped<IUserRepository, UserRepository>();
+        services.AddRepositories();
         services.AddSingleton<IPasswordHasher, Sha256PasswordHasher>();
 
         return services;
