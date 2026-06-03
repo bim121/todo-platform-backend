@@ -1,5 +1,5 @@
+using FluentMigrator.Runner;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -9,27 +9,30 @@ namespace TodoPlatform.Infrastructure.Persistence;
 
 public static class DatabaseInitializer
 {
-    public static async Task EnsureDevDatabaseAsync(this WebApplication app)
+    public static Task MigrateDevDatabaseAsync(this WebApplication app)
     {
         if (!app.Environment.IsDevelopment())
-            return;
+            return Task.CompletedTask;
 
-        if (!app.Configuration.GetValue("Database:AutoCreate", false))
-            return;
+        if (!app.Configuration.GetValue("Database:AutoMigrate", false))
+            return Task.CompletedTask;
 
         using var scope = app.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var runner = scope.ServiceProvider.GetRequiredService<IMigrationRunner>();
         var logger = scope.ServiceProvider
             .GetRequiredService<ILoggerFactory>()
             .CreateLogger("DatabaseInitializer");
 
         try
         {
-            await db.Database.EnsureCreatedAsync();
+            runner.MigrateUp();
+            logger.LogInformation("FluentMigrator: database migrations applied.");
         }
         catch (Exception ex)
         {
-            logger.LogWarning(ex, "Database auto-create skipped (is Postgres running?).");
+            logger.LogWarning(ex, "FluentMigrator: migrations skipped (is Postgres running?).");
         }
+
+        return Task.CompletedTask;
     }
 }

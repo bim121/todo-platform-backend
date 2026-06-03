@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using TodoPlatform.Application.Interfaces;
+using TodoPlatform.Infrastructure.Migrations;
 using TodoPlatform.Infrastructure.Persistence;
 using TodoPlatform.Infrastructure.Repositories;
 using TodoPlatform.Infrastructure.Security;
@@ -20,6 +21,7 @@ public static class DependencyInjection
         services.AddDbContext<AppDbContext>(options =>
             options.UseNpgsql(connectionString));
 
+        services.AddFluentMigrator(connectionString);
         services.AddRepositories();
         services.AddSingleton<IPasswordHasher, Sha256PasswordHasher>();
 
