@@ -16,7 +16,7 @@ public sealed class AuthService(IUserRepository users, IPasswordHasher passwordH
         if (user is null || !passwordHasher.Verify(request.Password, user.PasswordHash))
             return null;
 
-        return new AuthResponse(CreateMockToken(user.Id), UserDto.FromEntity(user));
+        return AuthResponse.FromUser(user, CreateMockToken(user.Id));
     }
 
     public async Task<UserDto> RegisterAsync(

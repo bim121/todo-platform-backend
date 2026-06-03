@@ -1,7 +1,5 @@
 using TodoPlatform.Application.Dtos;
 using TodoPlatform.Application.Interfaces;
-using TodoPlatform.Application.Mapping;
-using TodoPlatform.Domain.Entities;
 
 namespace TodoPlatform.Application.Services;
 
@@ -25,7 +23,7 @@ public sealed class TodoService(ITodoRepository repository) : ITodoService
         CreateTodoRequest request,
         CancellationToken cancellationToken = default)
     {
-        var todo = Todo.Create(request.Title, request.UserId);
+        var todo = request.ToEntity();
         await repository.AddAsync(todo, cancellationToken);
         return TodoDto.FromEntity(todo);
     }
@@ -39,15 +37,7 @@ public sealed class TodoService(ITodoRepository repository) : ITodoService
         if (todo is null)
             return null;
 
-        if (request.Title is not null)
-            todo.UpdateTitle(request.Title);
-
-        if (request.Status is not null)
-            todo.UpdateStatus(TodoContractMapper.ParseStatus(request.Status));
-
-        if (request.Completed.HasValue)
-            todo.SetCompleted(request.Completed.Value);
-
+        request.ApplyTo(todo);
         await repository.UpdateAsync(todo, cancellationToken);
         return TodoDto.FromEntity(todo);
     }
