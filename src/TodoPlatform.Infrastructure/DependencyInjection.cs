@@ -22,6 +22,7 @@ public static class DependencyInjection
             options.UseNpgsql(connectionString));
 
         services.AddFluentMigrator(connectionString);
+        services.AddScoped<DbSeeder>();
         services.AddRepositories();
         services.AddSingleton<IPasswordHasher, Sha256PasswordHasher>();
 

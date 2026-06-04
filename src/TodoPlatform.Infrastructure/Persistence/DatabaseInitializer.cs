@@ -9,13 +9,13 @@ namespace TodoPlatform.Infrastructure.Persistence;
 
 public static class DatabaseInitializer
 {
-    public static Task MigrateDevDatabaseAsync(this WebApplication app)
+    public static async Task MigrateDevDatabaseAsync(this WebApplication app)
     {
         if (!app.Environment.IsDevelopment())
-            return Task.CompletedTask;
+            return;
 
         if (!app.Configuration.GetValue("Database:AutoMigrate", false))
-            return Task.CompletedTask;
+            return;
 
         using var scope = app.Services.CreateScope();
         var runner = scope.ServiceProvider.GetRequiredService<IMigrationRunner>();
@@ -27,12 +27,15 @@ public static class DatabaseInitializer
         {
             runner.MigrateUp();
             logger.LogInformation("FluentMigrator: database migrations applied.");
+
+            var seeder = scope.ServiceProvider.GetRequiredService<DbSeeder>();
+            await seeder.SeedAsync();
+            logger.LogInformation("Database seed applied (test user and sample todos).");
         }
         catch (Exception ex)
         {
-            logger.LogWarning(ex, "FluentMigrator: migrations skipped (is Postgres running?).");
+            logger.LogWarning(ex, "FluentMigrator: migrations/seed skipped (is Postgres running?).");
         }
 
-        return Task.CompletedTask;
     }
 }
