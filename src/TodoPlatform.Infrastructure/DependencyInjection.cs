@@ -15,13 +15,24 @@ public static class DependencyInjection
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        var connectionString = configuration.GetConnectionString("Default")
-            ?? throw new InvalidOperationException("Connection string 'Default' is not configured.");
+        if (configuration.GetValue("Database:UseInMemory", false))
+        {
+            var databaseName = configuration.GetValue<string>("Database:InMemoryName")
+                ?? "TodoPlatformTests";
 
-        services.AddDbContext<AppDbContext>(options =>
-            options.UseNpgsql(connectionString));
+            services.AddDbContext<AppDbContext>(options =>
+                options.UseInMemoryDatabase(databaseName));
+        }
+        else
+        {
+            var connectionString = configuration.GetConnectionString("Default")
+                ?? throw new InvalidOperationException("Connection string 'Default' is not configured.");
 
-        services.AddFluentMigrator(connectionString);
+            services.AddDbContext<AppDbContext>(options =>
+                options.UseNpgsql(connectionString));
+
+            services.AddFluentMigrator(connectionString);
+        }
         services.AddScoped<DbSeeder>();
         services.AddRepositories();
         services.AddSingleton<IPasswordHasher, Sha256PasswordHasher>();
