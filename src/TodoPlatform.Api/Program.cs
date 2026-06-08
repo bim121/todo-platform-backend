@@ -1,5 +1,6 @@
 using Serilog;
 using TodoPlatform.Api.Exceptions;
+using TodoPlatform.Api.Swagger;
 using TodoPlatform.Application;
 using TodoPlatform.Infrastructure;
 using TodoPlatform.Infrastructure.Persistence;
@@ -21,10 +22,7 @@ builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(options =>
-{
-    options.SwaggerDoc("v1", new() { Title = "Todo Platform API", Version = "v1" });
-});
+builder.Services.AddApiSwagger();
 
 builder.Services.AddHealthChecks();
 
@@ -50,10 +48,7 @@ app.UseSerilogRequestLogging();
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI(options =>
-    {
-        options.SwaggerEndpoint("/swagger/v1/swagger.json", "Todo Platform API v1");
-    });
+    app.UseApiSwaggerUi();
 }
 
 app.UseCors("Frontend");

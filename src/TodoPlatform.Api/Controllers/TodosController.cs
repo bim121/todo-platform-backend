@@ -5,10 +5,19 @@ using TodoPlatform.Application.Services;
 
 namespace TodoPlatform.Api.Controllers;
 
+/// <summary>
+/// Todo CRUD endpoints aligned with contracts/openapi.yaml.
+/// </summary>
 [ApiController]
 [Route("api/todos")]
+[Produces("application/json")]
 public class TodosController(ITodoService todoService) : ControllerBase
 {
+    /// <summary>
+    /// List todos for a user.
+    /// </summary>
+    /// <param name="userId">Owner user id.</param>
+    /// <param name="cancellationToken">Request cancellation token.</param>
     [HttpGet]
     [ProducesResponseType(typeof(IReadOnlyList<TodoDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
@@ -23,6 +32,11 @@ public class TodosController(ITodoService todoService) : ControllerBase
         return Ok(todos);
     }
 
+    /// <summary>
+    /// Get a single todo by id.
+    /// </summary>
+    /// <param name="id">Todo id.</param>
+    /// <param name="cancellationToken">Request cancellation token.</param>
     [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(TodoDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
@@ -35,6 +49,11 @@ public class TodosController(ITodoService todoService) : ControllerBase
         return Ok(todo);
     }
 
+    /// <summary>
+    /// Create a new todo.
+    /// </summary>
+    /// <param name="request">Todo payload.</param>
+    /// <param name="cancellationToken">Request cancellation token.</param>
     [HttpPost]
     [ProducesResponseType(typeof(TodoDto), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
@@ -59,6 +78,12 @@ public class TodosController(ITodoService todoService) : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Partially update a todo.
+    /// </summary>
+    /// <param name="id">Todo id.</param>
+    /// <param name="request">Fields to update.</param>
+    /// <param name="cancellationToken">Request cancellation token.</param>
     [HttpPatch("{id:guid}")]
     [ProducesResponseType(typeof(TodoDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
@@ -82,6 +107,11 @@ public class TodosController(ITodoService todoService) : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Delete a todo.
+    /// </summary>
+    /// <param name="id">Todo id.</param>
+    /// <param name="cancellationToken">Request cancellation token.</param>
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]

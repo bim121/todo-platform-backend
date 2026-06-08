@@ -4,14 +4,23 @@ using TodoPlatform.Application.Services;
 
 namespace TodoPlatform.Api.Controllers;
 
+/// <summary>
+/// Temporary mock authentication (replaced by Keycloak in B-05).
+/// </summary>
 [ApiController]
 [Route("api/auth")]
+[Produces("application/json")]
 public class AuthController(IAuthService authService) : ControllerBase
 {
+    /// <summary>
+    /// Login with email and password. Returns mock JWT token until B-05.
+    /// </summary>
+    /// <param name="request">Credentials.</param>
+    /// <param name="cancellationToken">Request cancellation token.</param>
     [HttpPost("login")]
     [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<AuthResponse>> Login(
         [FromBody] LoginRequest request,
         CancellationToken cancellationToken)
@@ -23,9 +32,14 @@ public class AuthController(IAuthService authService) : ControllerBase
         return response is null ? Unauthorized() : Ok(response);
     }
 
+    /// <summary>
+    /// Register a new user.
+    /// </summary>
+    /// <param name="request">Registration payload.</param>
+    /// <param name="cancellationToken">Request cancellation token.</param>
     [HttpPost("register")]
     [ProducesResponseType(typeof(UserDto), StatusCodes.Status201Created)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<UserDto>> Register(
         [FromBody] RegisterRequest request,
         CancellationToken cancellationToken)
