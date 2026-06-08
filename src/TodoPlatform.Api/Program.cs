@@ -1,4 +1,5 @@
 using Serilog;
+using TodoPlatform.Api.Exceptions;
 using TodoPlatform.Application;
 using TodoPlatform.Infrastructure;
 using TodoPlatform.Infrastructure.Persistence;
@@ -14,6 +15,9 @@ builder.Host.UseSerilog((context, services, configuration) =>
 
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
+
+builder.Services.AddProblemDetails();
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -38,6 +42,8 @@ builder.Services.AddCors(options =>
 var app = builder.Build();
 
 await app.MigrateDevDatabaseAsync();
+
+app.UseExceptionHandler();
 
 app.UseSerilogRequestLogging();
 

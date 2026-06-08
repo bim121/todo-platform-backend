@@ -58,6 +58,33 @@ public class TodosEndpointTests : IClassFixture<TodoPlatformWebApplicationFactor
     }
 
     [Fact]
+    public async Task GetTodo_NotFound_ReturnsProblemDetails()
+    {
+        var response = await _client.GetAsync($"/api/todos/{Guid.NewGuid()}");
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
+
+        var json = await response.Content.ReadAsStringAsync();
+        Assert.Contains("Not Found", json);
+    }
+
+    [Fact]
+    public async Task CreateTodo_EmptyTitle_ReturnsValidationProblemDetails()
+    {
+        var request = new CreateTodoRequest("", _userId);
+
+        var response = await _client.PostAsJsonAsync("/api/todos", request);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
+
+        var json = await response.Content.ReadAsStringAsync();
+        Assert.Contains("errors", json);
+        Assert.Contains("title", json);
+    }
+
+    [Fact]
     public async Task Login_WithSeedUser_Returns200()
     {
         var response = await _client.PostAsJsonAsync(
