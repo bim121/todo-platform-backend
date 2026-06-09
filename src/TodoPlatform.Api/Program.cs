@@ -1,6 +1,7 @@
 using Serilog;
 using TodoPlatform.Api.Exceptions;
 using TodoPlatform.Api.Swagger;
+using TodoPlatform.Api.Versioning;
 using TodoPlatform.Application;
 using TodoPlatform.Infrastructure;
 using TodoPlatform.Infrastructure.Persistence;
@@ -51,7 +52,10 @@ if (app.Environment.IsDevelopment())
     app.UseApiSwaggerUi();
 }
 
+app.UseRouting();
 app.UseCors("Frontend");
+app.UseApiVersioning();
+app.UseDeprecationHeaders();
 
 app.MapControllers();
 app.MapHealthChecks("/health");

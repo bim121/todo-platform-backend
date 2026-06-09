@@ -8,7 +8,8 @@ namespace TodoPlatform.Api.Tests.Infrastructure;
 
 public sealed class TodoPlatformWebApplicationFactory : WebApplicationFactory<Program>
 {
-    private bool _seeded;
+    private static readonly SemaphoreSlim SeedLock = new(1, 1);
+    private static bool _seeded;
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
@@ -20,14 +21,25 @@ public sealed class TodoPlatformWebApplicationFactory : WebApplicationFactory<Pr
         if (_seeded)
             return;
 
-        using var scope = Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        await db.Database.EnsureCreatedAsync();
+        await SeedLock.WaitAsync();
+        try
+        {
+            if (_seeded)
+                return;
 
-        var seeder = scope.ServiceProvider.GetRequiredService<DbSeeder>();
-        await seeder.SeedAsync();
+            using var scope = Services.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            await db.Database.EnsureCreatedAsync();
 
-        _seeded = true;
+            var seeder = scope.ServiceProvider.GetRequiredService<DbSeeder>();
+            await seeder.SeedAsync();
+
+            _seeded = true;
+        }
+        finally
+        {
+            SeedLock.Release();
+        }
     }
 
     public async Task<Guid> GetTestUserIdAsync()
@@ -36,7 +48,7 @@ public sealed class TodoPlatformWebApplicationFactory : WebApplicationFactory<Pr
 
         using var scope = Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        var user = await db.Users.SingleAsync(u => u.Email == DbSeeder.TestEmail);
+        var user = await db.Users.FirstAsync(u => u.Email == DbSeeder.TestEmail);
         return user.Id;
     }
 }

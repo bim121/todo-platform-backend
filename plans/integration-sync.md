@@ -31,7 +31,7 @@ Backend разрабатывается **независимо**. Frontend под
 
 | Backend ready | Frontend enables |
 |---------------|------------------|
-| B-02 OpenAPI | Phase 1 contract sync, Phase 11 Pact |
+| B-02 OpenAPI | Phase 1 contract sync, Phase 11 Pact ([`docs/pact-provider.md`](../docs/pact-provider.md)) |
 | B-03 + B-05 | Phase 13 `useRealApi` |
 | B-05 + B-08 | Phase 17 Keycloak |
 | B-11 | Phase 14 tenant headers |

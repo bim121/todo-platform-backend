@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using TodoPlatform.Api.Versioning;
 using TodoPlatform.Application.Dtos;
 using TodoPlatform.Application.Services;
 
@@ -18,6 +19,7 @@ public class AuthController(IAuthService authService) : ControllerBase
     /// <param name="request">Credentials.</param>
     /// <param name="cancellationToken">Request cancellation token.</param>
     [HttpPost("login")]
+    [DeprecatedEndpoint("Sat, 01 Jun 2027 00:00:00 GMT")]
     [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]

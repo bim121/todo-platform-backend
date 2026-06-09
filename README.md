@@ -16,6 +16,7 @@ dotnet run --project src/TodoPlatform.Api
 | http://localhost:5000/swagger | Swagger UI |
 | http://localhost:5000/health | Health check |
 | http://localhost:5000/api/health | JSON health info |
+| [`docs/pact-provider.md`](./docs/pact-provider.md) | Pact provider URL for frontend Phase 11 |
 
 **Текущий этап:** B-00 выполнен (scaffold). Следующий: [B-01 CRUD + PostgreSQL](./plans/backend-phase-01-clean-api.md).
 
