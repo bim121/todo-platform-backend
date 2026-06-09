@@ -2,9 +2,9 @@
 
 > **Теория:** [guides/b-17-microservices-split-theory.md](./guides/b-17-microservices-split-theory.md) — статус: placeholder
 
-**Длительность:** 3–4 недели (35–45 ч)  
-**Предусловия:** [B-16](./backend-phase-16-kafka-streaming.md), [B-08](./backend-phase-08-docker-compose.md)  
-**Цель:** Разделить monolith на Todo.Service, Identity.Service (stub), Admin.Service, YARP API Gateway, shared contracts.
+**Длительность:** 4–5 недель (40–50 ч)  
+**Предусловия:** [B-16](./backend-phase-16-kafka-streaming.md), [B-08](./backend-phase-08-docker-compose.md), [B-10 GraphQL](./backend-phase-10-complex-sql-readmodels.md)  
+**Цель:** Разделить monolith на сервисы + **gRPC между ними** — учим protobuf в момент split, не в конце roadmap.
 
 ---
 
@@ -19,6 +19,13 @@
 - [ ] Health aggregation at gateway `/health`
 - [ ] CorrelationId forwarded across services
 - [ ] ADR-031: monolith split boundaries
+- [ ] `.proto` in `src/contracts/proto/` — `todos.proto`, `notifications.proto`
+- [ ] gRPC server в Todos.Api + gRPC client в Notifications.Api (stub)
+- [ ] Unary RPC: `NotifyTodoCreated`, `GetTodoSummary`
+- [ ] JWT/metadata propagation: REST/GraphQL → gRPC `authorization` header
+- [ ] YARP route `/graphql` → GraphQL host (from B-10)
+- [ ] gRPC **internal only** — не expose публично без TLS
+- [ ] ADR-017: gRPC vs REST for inter-service calls
 
 ---
 
@@ -113,6 +120,70 @@
 
 ---
 
+## Неделя 4 — gRPC (service-to-service)
+
+> **Момент обучения:** split monolith → синхронные вызовы между сервисами через gRPC, async — через RabbitMQ/Kafka (B-16).
+
+### B-17.11 Proto definitions
+
+**Файл:** `src/contracts/proto/todos/v1/todos.proto`
+
+```protobuf
+syntax = "proto3";
+package todos.v1;
+option csharp_namespace = "TodoPlatform.Contracts.Grpc.Todos";
+
+service TodoNotifications {
+  rpc NotifyTodoCreated (NotifyTodoCreatedRequest) returns (NotifyTodoCreatedResponse);
+  rpc GetTodoSummary (GetTodoSummaryRequest) returns (TodoSummary);
+}
+```
+
+```bash
+dotnet add src/services/Todos/TodoPlatform.Todos.Api package Grpc.AspNetCore
+dotnet add src/services/Notifications/TodoPlatform.Notifications.Api package Grpc.Net.Client
+dotnet add src/contracts/TodoPlatform.Contracts.Grpc package Grpc.Tools
+```
+
+### B-17.12 gRPC server (Todos.Api)
+
+**Файл:** `Grpc/TodoNotificationsGrpcService.cs` — implement `NotifyTodoCreated`.
+
+### B-17.13 gRPC client (Notifications.Api)
+
+Register `GrpcChannel` → `http://todos-api:8080`. Call when consumer needs todo details without HTTP hop.
+
+### B-17.14 Inter-service auth
+
+Pass `Metadata` with bearer token or internal service account JWT.
+
+### B-17.15 Gateway routes (REST + GraphQL + gRPC)
+
+| Path | Target |
+|------|--------|
+| `/api/*` | REST services |
+| `/graphql` | GraphQL server (B-10) |
+| gRPC | internal Docker network only |
+
+---
+
+## Неделя 5 — gRPC tests & perf notes
+
+### B-17.16 Integration test
+
+`WebApplicationFactory` + `GrpcChannel.ForAddress` — `NotifyTodoCreated` works.
+
+### B-17.17 Load comparison doc
+
+**Файл:** `docs/perf/rest-vs-grpc-internal.md` — same operation: REST hop vs gRPC binary.
+
+### B-17.18 Interview prep
+
+- «gRPC vs REST для public API?» → never public gRPC without good reason
+- «When GraphQL h2c + gRPC internal?» → diagram in ADR-017
+
+---
+
 ## Команды
 
 ```bash
@@ -139,7 +210,10 @@ dotnet test tests/TodoPlatform.E2E.Tests
 | 4 | Headers forwarded | tenant + auth work |
 | 5 | E2E tests | CRUD through gateway |
 | 6 | ADR-031 | boundaries doc |
-| 7 | No breaking OpenAPI | contract unchanged externally |
+| 7 | gRPC NotifyTodoCreated | integration test |
+| 8 | `/graphql` via gateway | Banana Cake Pop through :8080 |
+| 9 | gRPC not public | network diagram |
+| 10 | No breaking OpenAPI | contract unchanged externally |
 
 ---
 
@@ -149,6 +223,8 @@ dotnet test tests/TodoPlatform.E2E.Tests
 |-------|----------|
 | B-17 | Frontend keeps single `apiUrl` — gateway |
 | Phase 13+ | No URL changes if gateway preserves paths |
+| B-17 gRPC | Frontend **не** вызывает gRPC — [Phase 13-GraphQL](../../anular-ngrx-todo-auth/plans/phase-13-graphql-client.md) week 4 (architecture) |
+| B-10 GraphQL | `/graphql` on gateway |
 | B-23 | nginx replaces YARP at edge (optional) |
 
 Parallel skills: Design notification system — [parallel-skills-backend.md](./parallel-skills-backend.md).

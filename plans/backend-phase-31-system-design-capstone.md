@@ -4,8 +4,8 @@
 > **Parallel track:** [parallel-skills-backend.md](./parallel-skills-backend.md)
 
 **Длительность:** 3–4 недели (30–40 ч)  
-**Предусловия:** [B-30](./backend-phase-30-security-hardening.md) — весь backend roadmap пройден  
-**Цель:** Пять полноценных system design документов по реальной архитектуре todo-platform + portfolio polish.
+**Предусловия:** [B-30](./backend-phase-30-security-hardening.md), [B-10 GraphQL](./backend-phase-10-complex-sql-readmodels.md), [B-17 gRPC](./backend-phase-17-microservices-split.md)  
+**Цель:** Пять полноценных system design документов + **doc 06: GraphQL BFF & gRPC internal**
 
 ---
 
@@ -16,6 +16,7 @@
 - [ ] `docs/system-design/backend/03-search-at-scale.md`
 - [ ] `docs/system-design/backend/04-saga-migration-rollout.md`
 - [ ] `docs/system-design/backend/05-global-db-sharding.md`
+- [ ] `docs/system-design/backend/06-graphql-bff-grpc-internal.md`
 - [ ] Каждый doc: requirements, estimations, diagram, API, data model, deep dives, tradeoffs, failures
 - [ ] Mermaid или Excalidraw диagrams в каждом doc
 - [ ] Cross-links к ADR B-04…B-30

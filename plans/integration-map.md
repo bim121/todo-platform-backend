@@ -21,6 +21,10 @@ See [integration-sync.md](./integration-sync.md) for calendar and readiness gate
 | B-15 | Backend search |
 | B-14 | Attachments |
 | B-29 | Phase 18 AI |
+| B-10 GraphQL | **Phase 13-GraphQL** (`useGraphQL`); Kanban one-query |
+| B-17 gRPC | Phase 13-GraphQL (architecture); internal only |
+
+**GraphQL schema:** [`../../contracts/graphql/schema.graphql`](../../contracts/graphql/schema.graphql)
 
 ---
 

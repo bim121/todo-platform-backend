@@ -137,6 +137,8 @@ dotnet test --filter "FullyQualifiedName~Admin"
 |-------|----------|
 | B-12 + B-28 | Frontend Phase 14–15 Admin panel |
 | Phase 14 | AdminFacade → GetTenantsQuery |
+| B-12 GraphQL | Extend schema: `adminTenants`, `switchTenantTrack` mutation (from B-10 base) |
+| Phase 13-GraphQL | Admin UI может `useGraphQL` для tenant list |
 | B-18 | BulkApplyMigrationCommand via Saga |
 
 См. [integration-map.md](./integration-map.md) — Admin API section.

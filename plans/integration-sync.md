@@ -14,12 +14,13 @@ Backend разрабатывается **независимо**. Frontend под
 | 1 | Phase 0–1 | — | OpenAPI draft |
 | 2–3 | Phase 2–3 | B-00 → B-02 | — |
 | 4–5 | Phase 4–5 | B-03 → B-08 | HttpTodoRepository skeleton |
-| 6–7 | Phase 6–7 | B-09 → B-10 | SQL (backend only) |
+| 6–7 | Phase 6–7 | **B-09 → B-10 (+ GraphQL)** | Backend GraphQL ready for later |
 | 8–9 | Phase 8–9 | B-11 → B-13 | Optional SignalR |
 | 10–11 | Phase 10–11 | B-14 → B-16 | Pact tests |
 | 12 | Phase 12 + 17 | B-05 + B-12 | Keycloak + Admin API |
-| 13–14 | Phase 13 | B-17 | `useRealApi: true` |
-| 15 | Phase 14 + Admin v1 | B-12, B-28 | Admin panel |
+| 6–7 | Phase 6–7 | **B-09 → B-10 (+ GraphQL)** | Backend GraphQL ready |
+| 13–14 | **Phase 13 REST → 13-GraphQL** | **B-17 (+ gRPC)** | `useRealApi` → `useGraphQL` |
+| 15 | Phase 14 + Admin v1 | B-12, B-28 | Admin (GraphQL optional) |
 | 16 | Phase 15 + Admin v2 | B-28 | Blue/green UI |
 | 17 | Phase 18 AI | B-29 | Semantic search |
 | 18+ | Phase 16 CDN | B-20 → B-31 | Full stack deploy |
@@ -39,6 +40,8 @@ Backend разрабатывается **независимо**. Frontend под
 | B-15 | Phase 13 `useBackendSearch` |
 | B-14 | Attachments feature flag |
 | B-29 | Phase 18 AI endpoints |
+| B-10 GraphQL | **Phase 13-GraphQL** (`useGraphQL`); Kanban one-query |
+| B-17 gRPC | Phase 13-GraphQL (architecture doc); internal only |
 
 ---
 

@@ -3,9 +3,9 @@
 > **Теория:** [guides/b-10-complex-sql-readmodels-theory.md](./guides/b-10-complex-sql-readmodels-theory.md) — статус: placeholder  
 > **Паттерн:** CQRS read side — writes EF, reads Dapper
 
-**Длительность:** 2–3 недели (25–30 ч)  
-**Предусловия:** [B-09](./backend-phase-09-postgres-queries.md), [B-03](./backend-phase-03-cqrs-mediatr.md)  
-**Цель:** Dapper для тяжёлых read queries, SQL views, dashboard aggregates, admin statistics API.
+**Длительность:** 3–4 недели (35–45 ч)  
+**Предусловия:** [B-09](./backend-phase-09-postgres-queries.md), [B-03](./backend-phase-03-cqrs-mediatr.md), [B-05 Auth](./backend-phase-05-keycloak-auth.md)  
+**Цель:** Dapper для тяжёлых read queries + **GraphQL BFF** (Hot Chocolate) на том же MediatR — сразу после read models, не «в конце roadmap».
 
 ---
 
@@ -20,6 +20,12 @@
 - [ ] Endpoint `GET /api/todos/stats` in OpenAPI
 - [ ] No EF for read handlers in this phase — clear folder `Application/ReadModels/`
 - [ ] Benchmark: Dapper vs EF for stats query documented
+- [ ] Hot Chocolate GraphQL `/graphql` — resolvers → **MediatR** (не дублировать логику)
+- [ ] Schema: `Query` (todos, todoStats), `Mutation` (createTodo, updateTodo)
+- [ ] `contracts/graphql/schema.graphql` exported для frontend [Phase 13-GraphQL](../../anular-ngrx-todo-auth/plans/phase-13-graphql-client.md)
+- [ ] GraphQL auth: `@Authorize`, JWT + `X-Tenant-Id` в context
+- [ ] DataLoader demo для N+1 (todo → user)
+- [ ] ADR-010: REST vs GraphQL в этом проекте
 
 ---
 
@@ -99,6 +105,81 @@ GROUP BY user_id;
 
 ---
 
+## Неделя 3 — GraphQL BFF (Hot Chocolate)
+
+> **Момент обучения:** сразу после Dapper read models — GraphQL отдаёт те же `GetTodosQuery`, `GetTodoStatsQuery` без новой бизнес-логики.  
+> **Frontend подключится** в [Phase 13-GraphQL](../../anular-ngrx-todo-auth/plans/phase-13-graphql-client.md) сразу после REST cutover.
+
+### B-10.3 Packages & setup
+
+```bash
+dotnet add src/TodoPlatform.Api package HotChocolate.AspNetCore
+dotnet add src/TodoPlatform.Api package HotChocolate.Data
+dotnet add src/TodoPlatform.Api package HotChocolate.AspNetCore.Authorization
+```
+
+**Program.cs:**
+```csharp
+builder.Services
+    .AddGraphQLServer()
+    .AddQueryType<Query>()
+    .AddMutationType<Mutation>()
+    .AddAuthorization()
+    .AddProjections()
+    .AddFiltering()
+    .AddSorting();
+app.MapGraphQL("/graphql");
+```
+
+### B-10.4 Schema & resolvers → MediatR
+
+**Файлы:** `Api/GraphQL/Query.cs`, `Mutation.cs`, `Types/TodoType.cs`
+
+```graphql
+type Query {
+  todos(userId: UUID!, status: TodoStatus): [Todo!]!
+  todoStats(userId: UUID!): TodoStats!
+}
+```
+
+```csharp
+public async Task<IReadOnlyList<TodoDto>> GetTodos(
+    Guid userId, [Service] IMediator mediator, CancellationToken ct)
+    => await mediator.Send(new GetTodosQuery(userId, null), ct);
+```
+
+**Правило:** resolver = thin, как controller. EF/Dapper только в handlers.
+
+### B-10.5 Dev UI & export schema
+
+- Banana Cake Pop: `/graphql/ui` (dev only)
+- `dotnet graphql export --output ../../contracts/graphql/schema.graphql`
+
+### B-10.6 DataLoader (N+1)
+
+`BatchDataLoader<Guid, UserDto>` для списка todos — interview topic.
+
+---
+
+## Неделя 4 — GraphQL tests & handoff
+
+### B-10.7 Integration tests
+
+```csharp
+[Fact]
+public async Task GraphQL_GetTodos_ReturnsData() { ... }
+```
+
+### B-10.8 Error handling
+
+GraphQL `errors[]` format + mapping from MediatR validation exceptions.
+
+### B-10.9 Frontend contract
+
+Commit `contracts/graphql/schema.graphql` — frontend codegen в Phase 13-GraphQL.
+
+---
+
 ## Команды
 
 ```bash
@@ -126,7 +207,10 @@ dotnet test --filter "FullyQualifiedName~Dapper"
 | 4 | SQL injection safe | whitelist tests |
 | 5 | OpenAPI synced | contract diff clean |
 | 6 | Benchmark doc | EF vs Dapper numbers |
-| 7 | Tests green | `dotnet test` |
+| 7 | GraphQL todos query | Banana Cake Pop / curl |
+| 8 | Resolvers use MediatR only | no EF in GraphQL layer |
+| 9 | Schema in contracts/graphql | file committed |
+| 10 | Tests green | `dotnet test` |
 
 ---
 
@@ -135,7 +219,8 @@ dotnet test --filter "FullyQualifiedName~Dapper"
 | Когда | Действие |
 |-------|----------|
 | B-10 | Phase 14 filters UI — query params match |
-| Admin panel | Stats widgets consume `/api/todos/stats` |
+| B-10 GraphQL | [Phase 13-GraphQL](../../anular-ngrx-todo-auth/plans/phase-13-graphql-client.md) — Kanban one-query |
+| Admin panel | Stats widgets: REST `/api/todos/stats` **или** GraphQL `todoStats` |
 | B-15 | Full-text replaces LIKE search |
 
 После B-10 — backend system design mock recommended — [parallel-skills-backend.md](./parallel-skills-backend.md).

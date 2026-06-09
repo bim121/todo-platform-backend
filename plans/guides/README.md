@@ -37,14 +37,14 @@
 | B-07 | [b-07-rabbitmq-basics-theory.md](./b-07-rabbitmq-basics-theory.md) | placeholder |
 | B-08 | [b-08-docker-compose-theory.md](./b-08-docker-compose-theory.md) | placeholder |
 | B-09 | [b-09-postgres-queries-theory.md](./b-09-postgres-queries-theory.md) | placeholder |
-| B-10 | [b-10-complex-sql-readmodels-theory.md](./b-10-complex-sql-readmodels-theory.md) | placeholder |
+| B-10 | [b-10-complex-sql-readmodels-theory.md](./b-10-complex-sql-readmodels-theory.md) | placeholder (+ GraphQL) |
 | B-11 | [b-11-multi-tenant-isolation-theory.md](./b-11-multi-tenant-isolation-theory.md) | placeholder |
 | B-12 | [b-12-tenant-schema-versioning-theory.md](./b-12-tenant-schema-versioning-theory.md) | placeholder |
 | B-13 | [b-13-realtime-signalr-theory.md](./b-13-realtime-signalr-theory.md) | placeholder |
 | B-14 | [b-14-files-storage-theory.md](./b-14-files-storage-theory.md) | placeholder |
 | B-15 | [b-15-search-fulltext-theory.md](./b-15-search-fulltext-theory.md) | placeholder |
 | B-16 | [b-16-kafka-streaming-theory.md](./b-16-kafka-streaming-theory.md) | placeholder |
-| B-17 | [b-17-microservices-split-theory.md](./b-17-microservices-split-theory.md) | placeholder |
+| B-17 | [b-17-microservices-split-theory.md](./b-17-microservices-split-theory.md) | placeholder (+ gRPC) |
 | B-18 | [b-18-saga-patterns-theory.md](./b-18-saga-patterns-theory.md) | placeholder |
 | B-19 | [b-19-redis-advanced-theory.md](./b-19-redis-advanced-theory.md) | placeholder |
 | B-20 | [b-20-db-replication-scaling-theory.md](./b-20-db-replication-scaling-theory.md) | placeholder |
@@ -59,6 +59,7 @@
 | B-29 | [b-29-ai-vector-backend-theory.md](./b-29-ai-vector-backend-theory.md) | placeholder |
 | B-30 | [b-30-security-hardening-theory.md](./b-30-security-hardening-theory.md) | placeholder |
 | B-31 | [b-31-system-design-capstone-theory.md](./b-31-system-design-capstone-theory.md) | placeholder |
+| **B-32** | [b-32-graphql-grpc-theory.md](./b-32-graphql-grpc-theory.md) | index → B-10 + B-17 |
 
 ---
 

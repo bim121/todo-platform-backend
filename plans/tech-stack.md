@@ -26,6 +26,8 @@
 | Observability | OpenTelemetry, Prometheus, Grafana, Loki | B-24 |
 | Load test | k6, BenchmarkDotNet | B-22 |
 | Contract | OpenAPI 3.1 in `../../contracts/` | B-02 |
+| **GraphQL** | Hot Chocolate | **B-10** |
+| **gRPC** | Grpc.AspNetCore, protobuf | **B-17** |
 
 ## Azure-first (Microsoft interviews)
 

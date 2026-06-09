@@ -21,14 +21,14 @@
 | B-07 | [backend-phase-07-rabbitmq-basics.md](./backend-phase-07-rabbitmq-basics.md) | RabbitMQ + MassTransit |
 | B-08 | [backend-phase-08-docker-compose.md](./backend-phase-08-docker-compose.md) | Docker full stack |
 | B-09 | [backend-phase-09-postgres-queries.md](./backend-phase-09-postgres-queries.md) | **SQL optimization I** |
-| B-10 | [backend-phase-10-complex-sql-readmodels.md](./backend-phase-10-complex-sql-readmodels.md) | **SQL optimization II** |
+| B-10 | [backend-phase-10-complex-sql-readmodels.md](./backend-phase-10-complex-sql-readmodels.md) | **SQL II + GraphQL BFF** |
 | B-11 | [backend-phase-11-multi-tenant-isolation.md](./backend-phase-11-multi-tenant-isolation.md) | Multi-tenant RLS |
 | B-12 | [backend-phase-12-tenant-schema-versioning.md](./backend-phase-12-tenant-schema-versioning.md) | Migrations + **Admin API** |
 | B-13 | [backend-phase-13-realtime-signalr.md](./backend-phase-13-realtime-signalr.md) | SignalR realtime |
 | B-14 | [backend-phase-14-files-storage.md](./backend-phase-14-files-storage.md) | Azure Blob attachments |
 | B-15 | [backend-phase-15-search-fulltext.md](./backend-phase-15-search-fulltext.md) | Full-text search |
 | B-16 | [backend-phase-16-kafka-streaming.md](./backend-phase-16-kafka-streaming.md) | Kafka + audit log |
-| B-17 | [backend-phase-17-microservices-split.md](./backend-phase-17-microservices-split.md) | Microservices + YARP |
+| B-17 | [backend-phase-17-microservices-split.md](./backend-phase-17-microservices-split.md) | Microservices + YARP + **gRPC** |
 | B-18 | [backend-phase-18-saga-patterns.md](./backend-phase-18-saga-patterns.md) | **Saga patterns** |
 | B-19 | [backend-phase-19-redis-advanced.md](./backend-phase-19-redis-advanced.md) | Rate limit, locks |
 | B-20 | [backend-phase-20-db-replication-scaling.md](./backend-phase-20-db-replication-scaling.md) | **DB scaling I** |
@@ -43,6 +43,9 @@
 | B-29 | [backend-phase-29-ai-vector-backend.md](./backend-phase-29-ai-vector-backend.md) | AI / vector search |
 | B-30 | [backend-phase-30-security-hardening.md](./backend-phase-30-security-hardening.md) | OWASP API Top 10 |
 | B-31 | [backend-phase-31-system-design-capstone.md](./backend-phase-31-system-design-capstone.md) | System design capstone |
+| ~~B-32~~ | [backend-phase-32-graphql-grpc.md](./backend-phase-32-graphql-grpc.md) | **→ перенесена** в B-10 + B-17 |
+
+> **GraphQL** — [B-10](./backend-phase-10-complex-sql-readmodels.md) (после read models). **gRPC** — [B-17](./backend-phase-17-microservices-split.md) (в момент split). B-32 — redirect для старых ссылок.
 
 ---
 
@@ -64,9 +67,10 @@
 Modular Monolith (B-00…B-16)
   └── Clean Architecture
         └── CQRS via MediatR (B-03)
-              └── DDD tactical (B-04)
-                    └── Microservices (B-17)
-                          └── Event-Driven + Saga (B-16, B-18)
+                    └── DDD tactical (B-04)
+                          └── GraphQL BFF on monolith (B-10)
+                                └── Microservices + gRPC (B-17)
+                                      └── Event-Driven + Saga (B-16, B-18)
 ```
 
 ---

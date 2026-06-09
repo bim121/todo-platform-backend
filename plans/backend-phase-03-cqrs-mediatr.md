@@ -105,6 +105,8 @@ Mock `ITodoRepository`, test handler in isolation.
 | `TodosFacade.load()` | `GetTodosQuery` |
 | `AdminFacade.switchTrack()` | `SwitchTenantTrackCommand` |
 
+> **GraphQL (B-10):** те же handlers — `Query.GetTodos` → `GetTodosQuery`, без дублирования логики.
+
 ---
 
 ## Критерии готовности

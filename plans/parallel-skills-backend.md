@@ -19,6 +19,8 @@
 | 8 | Design search engine | B-15, B-29 |
 | 9 | Design file upload + CDN | B-14 |
 | 10 | Design chat at scale | B-13 SignalR |
+| 11 | GraphQL BFF vs REST for admin dashboard | B-10 |
+| 12 | gRPC vs REST between microservices | B-17 |
 
 **Формат:** `docs/system-design/backend/NN-<name>.md`
 
@@ -53,6 +55,8 @@
 | EF Core performance | B-09 |
 | Source generators (optional) | B-03+ |
 | Minimal APIs vs Controllers | B-02 |
+| Hot Chocolate GraphQL | B-10 |
+| gRPC + protobuf | B-17 |
 
 ---
 
