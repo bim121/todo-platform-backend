@@ -4,6 +4,7 @@ using TodoPlatform.Api.Swagger;
 using TodoPlatform.Api.Versioning;
 using TodoPlatform.Application;
 using TodoPlatform.Infrastructure;
+using TodoPlatform.Infrastructure.Behaviors;
 using TodoPlatform.Infrastructure.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -15,8 +16,8 @@ builder.Host.UseSerilog((context, services, configuration) =>
         .Enrich.FromLogContext()
         .WriteTo.Console());
 
-builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddApplication(cfg => cfg.AddOpenBehavior(typeof(TransactionBehavior<,>)));
 
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
