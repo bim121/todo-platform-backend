@@ -22,7 +22,6 @@ public static class DependencyInjection
 
         services.AddValidatorsFromAssembly(typeof(ApplicationAssemblyMarker).Assembly);
 
-        services.AddScoped<ITodoService, TodoService>();
         services.AddScoped<IAuthService, AuthService>();
         return services;
     }

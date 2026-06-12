@@ -1,7 +1,11 @@
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using TodoPlatform.Application.Dtos;
-using TodoPlatform.Application.Exceptions;
-using TodoPlatform.Application.Services;
+using TodoPlatform.Application.Todos.Commands.CreateTodo;
+using TodoPlatform.Application.Todos.Commands.DeleteTodo;
+using TodoPlatform.Application.Todos.Commands.UpdateTodo;
+using TodoPlatform.Application.Todos.Queries.GetTodoById;
+using TodoPlatform.Application.Todos.Queries.GetTodos;
 
 namespace TodoPlatform.Api.Controllers;
 
@@ -11,7 +15,7 @@ namespace TodoPlatform.Api.Controllers;
 [ApiController]
 [Route("api/todos")]
 [Produces("application/json")]
-public class TodosController(ITodoService todoService) : ControllerBase
+public class TodosController(IMediator mediator) : ControllerBase
 {
     /// <summary>
     /// List todos for a user.
@@ -25,10 +29,7 @@ public class TodosController(ITodoService todoService) : ControllerBase
         [FromQuery] Guid userId,
         CancellationToken cancellationToken)
     {
-        if (userId == Guid.Empty)
-            throw ValidationException.ForField("userId", "Query parameter 'userId' is required.");
-
-        var todos = await todoService.ListByUserAsync(userId, cancellationToken);
+        var todos = await mediator.Send(new GetTodosQuery(userId), cancellationToken);
         return Ok(todos);
     }
 
@@ -42,10 +43,7 @@ public class TodosController(ITodoService todoService) : ControllerBase
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<TodoDto>> GetById(Guid id, CancellationToken cancellationToken)
     {
-        var todo = await todoService.GetByIdAsync(id, cancellationToken);
-        if (todo is null)
-            throw new NotFoundException($"Todo '{id}' was not found.");
-
+        var todo = await mediator.Send(new GetTodoByIdQuery(id), cancellationToken);
         return Ok(todo);
     }
 
@@ -61,21 +59,11 @@ public class TodosController(ITodoService todoService) : ControllerBase
         [FromBody] CreateTodoRequest request,
         CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(request.Title))
-            throw ValidationException.ForField("title", "Title is required.");
+        var todo = await mediator.Send(
+            new CreateTodoCommand(request.Title, request.UserId),
+            cancellationToken);
 
-        if (request.UserId == Guid.Empty)
-            throw ValidationException.ForField("userId", "UserId is required.");
-
-        try
-        {
-            var todo = await todoService.CreateAsync(request, cancellationToken);
-            return CreatedAtAction(nameof(GetById), new { id = todo.Id }, todo);
-        }
-        catch (ArgumentException ex)
-        {
-            throw ValidationException.ForField("title", ex.Message);
-        }
+        return CreatedAtAction(nameof(GetById), new { id = todo.Id }, todo);
     }
 
     /// <summary>
@@ -93,18 +81,8 @@ public class TodosController(ITodoService todoService) : ControllerBase
         [FromBody] UpdateTodoRequest request,
         CancellationToken cancellationToken)
     {
-        try
-        {
-            var todo = await todoService.UpdateAsync(id, request, cancellationToken);
-            if (todo is null)
-                throw new NotFoundException($"Todo '{id}' was not found.");
-
-            return Ok(todo);
-        }
-        catch (ArgumentException ex)
-        {
-            throw ValidationException.ForField("status", ex.Message);
-        }
+        var todo = await mediator.Send(new UpdateTodoCommand(id, request), cancellationToken);
+        return Ok(todo);
     }
 
     /// <summary>
@@ -117,10 +95,7 @@ public class TodosController(ITodoService todoService) : ControllerBase
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
-        var deleted = await todoService.DeleteAsync(id, cancellationToken);
-        if (!deleted)
-            throw new NotFoundException($"Todo '{id}' was not found.");
-
+        await mediator.Send(new DeleteTodoCommand(id), cancellationToken);
         return NoContent();
     }
 }
