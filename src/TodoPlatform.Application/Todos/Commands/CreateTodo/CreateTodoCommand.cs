@@ -8,7 +8,7 @@ namespace TodoPlatform.Application.Todos.Commands.CreateTodo;
 
 public sealed record CreateTodoCommand(string Title, Guid UserId) : IRequest<TodoDto>, ICommand;
 
-public sealed class CreateTodoHandler(ITodoRepository repository)
+public sealed class CreateTodoHandler(ITodoRepository repository, IUnitOfWork unitOfWork)
     : IRequestHandler<CreateTodoCommand, TodoDto>
 {
     public async Task<TodoDto> Handle(CreateTodoCommand request, CancellationToken cancellationToken)
@@ -17,6 +17,7 @@ public sealed class CreateTodoHandler(ITodoRepository repository)
         {
             var todo = Todo.Create(request.Title, request.UserId);
             await repository.AddAsync(todo, cancellationToken);
+            await unitOfWork.CommitAsync(cancellationToken);
             return TodoDto.FromEntity(todo);
         }
         catch (ArgumentException ex)

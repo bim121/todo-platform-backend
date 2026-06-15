@@ -24,7 +24,12 @@ public sealed class UpdateTodoHandlerTests
             .Callback<Todo, CancellationToken>((entity, _) => updated = entity)
             .Returns(Task.CompletedTask);
 
-        var handler = new UpdateTodoHandler(repository.Object);
+        var unitOfWork = new Mock<IUnitOfWork>();
+        unitOfWork
+            .Setup(u => u.CommitAsync(It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        var handler = new UpdateTodoHandler(repository.Object, unitOfWork.Object);
         var result = await handler.Handle(
             new UpdateTodoCommand(todo.Id, new UpdateTodoRequest(Title: "New title", Completed: true)),
             CancellationToken.None);
@@ -44,7 +49,8 @@ public sealed class UpdateTodoHandlerTests
             .Setup(r => r.GetByIdAsync(id, It.IsAny<CancellationToken>()))
             .ReturnsAsync((Todo?)null);
 
-        var handler = new UpdateTodoHandler(repository.Object);
+        var unitOfWork = new Mock<IUnitOfWork>();
+        var handler = new UpdateTodoHandler(repository.Object, unitOfWork.Object);
 
         await Assert.ThrowsAsync<NotFoundException>(() =>
             handler.Handle(new UpdateTodoCommand(id, new UpdateTodoRequest(Title: "X")), CancellationToken.None));
@@ -59,7 +65,8 @@ public sealed class UpdateTodoHandlerTests
             .Setup(r => r.GetByIdAsync(todo.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(todo);
 
-        var handler = new UpdateTodoHandler(repository.Object);
+        var unitOfWork = new Mock<IUnitOfWork>();
+        var handler = new UpdateTodoHandler(repository.Object, unitOfWork.Object);
 
         await Assert.ThrowsAsync<ValidationException>(() =>
             handler.Handle(

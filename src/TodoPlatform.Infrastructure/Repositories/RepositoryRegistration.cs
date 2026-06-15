@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using TodoPlatform.Application.Interfaces;
+using TodoPlatform.Infrastructure.Persistence;
 
 namespace TodoPlatform.Infrastructure.Repositories;
 
@@ -9,6 +10,7 @@ public static class RepositoryRegistration
     {
         services.AddScoped<ITodoRepository, TodoRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IUnitOfWork, EfUnitOfWork>();
         return services;
     }
 }

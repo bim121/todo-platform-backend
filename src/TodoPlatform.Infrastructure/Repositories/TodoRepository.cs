@@ -1,12 +1,11 @@
 using Microsoft.EntityFrameworkCore;
-using TodoPlatform.Application.Common;
 using TodoPlatform.Application.Interfaces;
 using TodoPlatform.Domain.Entities;
 using TodoPlatform.Infrastructure.Persistence;
 
 namespace TodoPlatform.Infrastructure.Repositories;
 
-public sealed class TodoRepository(AppDbContext db, IDomainEventDispatcher domainEvents) : ITodoRepository
+public sealed class TodoRepository(AppDbContext db) : ITodoRepository
 {
     public async Task<IReadOnlyList<Todo>> GetByUserIdAsync(
         Guid userId,
@@ -20,19 +19,16 @@ public sealed class TodoRepository(AppDbContext db, IDomainEventDispatcher domai
     public Task<Todo?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
         db.Todos.FirstOrDefaultAsync(t => t.Id == id, cancellationToken);
 
-    public async Task<Todo> AddAsync(Todo todo, CancellationToken cancellationToken = default)
+    public Task<Todo> AddAsync(Todo todo, CancellationToken cancellationToken = default)
     {
         db.Todos.Add(todo);
-        await db.SaveChangesAsync(cancellationToken);
-        await todo.DispatchAndClearDomainEventsAsync(domainEvents, cancellationToken);
-        return todo;
+        return Task.FromResult(todo);
     }
 
-    public async Task UpdateAsync(Todo todo, CancellationToken cancellationToken = default)
+    public Task UpdateAsync(Todo todo, CancellationToken cancellationToken = default)
     {
         db.Todos.Update(todo);
-        await db.SaveChangesAsync(cancellationToken);
-        await todo.DispatchAndClearDomainEventsAsync(domainEvents, cancellationToken);
+        return Task.CompletedTask;
     }
 
     public async Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
@@ -43,8 +39,6 @@ public sealed class TodoRepository(AppDbContext db, IDomainEventDispatcher domai
 
         todo.MarkDeleted();
         db.Todos.Remove(todo);
-        await db.SaveChangesAsync(cancellationToken);
-        await todo.DispatchAndClearDomainEventsAsync(domainEvents, cancellationToken);
         return true;
     }
 }

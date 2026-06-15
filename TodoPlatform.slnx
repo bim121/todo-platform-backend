@@ -5,4 +5,5 @@
   <Project Path="src/TodoPlatform.Infrastructure/TodoPlatform.Infrastructure.csproj" />
   <Project Path="tests/TodoPlatform.Api.Tests/TodoPlatform.Api.Tests.csproj" />
   <Project Path="tests/TodoPlatform.Application.Tests/TodoPlatform.Application.Tests.csproj" />
+  <Project Path="tests/TodoPlatform.Infrastructure.Tests/TodoPlatform.Infrastructure.Tests.csproj" />
 </Solution>
