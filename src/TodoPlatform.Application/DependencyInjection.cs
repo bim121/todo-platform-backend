@@ -2,6 +2,7 @@ using FluentValidation;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using TodoPlatform.Application.Behaviors;
+using TodoPlatform.Application.Common;
 using TodoPlatform.Application.Services;
 
 namespace TodoPlatform.Application;
@@ -22,6 +23,7 @@ public static class DependencyInjection
 
         services.AddValidatorsFromAssembly(typeof(ApplicationAssemblyMarker).Assembly);
 
+        services.AddScoped<IDomainEventDispatcher, DomainEventDispatcher>();
         services.AddScoped<IAuthService, AuthService>();
         return services;
     }

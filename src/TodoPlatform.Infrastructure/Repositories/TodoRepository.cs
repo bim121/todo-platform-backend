@@ -1,11 +1,12 @@
 using Microsoft.EntityFrameworkCore;
+using TodoPlatform.Application.Common;
 using TodoPlatform.Application.Interfaces;
 using TodoPlatform.Domain.Entities;
 using TodoPlatform.Infrastructure.Persistence;
 
 namespace TodoPlatform.Infrastructure.Repositories;
 
-public sealed class TodoRepository(AppDbContext db) : ITodoRepository
+public sealed class TodoRepository(AppDbContext db, IDomainEventDispatcher domainEvents) : ITodoRepository
 {
     public async Task<IReadOnlyList<Todo>> GetByUserIdAsync(
         Guid userId,
@@ -23,6 +24,7 @@ public sealed class TodoRepository(AppDbContext db) : ITodoRepository
     {
         db.Todos.Add(todo);
         await db.SaveChangesAsync(cancellationToken);
+        await todo.DispatchAndClearDomainEventsAsync(domainEvents, cancellationToken);
         return todo;
     }
 
@@ -30,6 +32,7 @@ public sealed class TodoRepository(AppDbContext db) : ITodoRepository
     {
         db.Todos.Update(todo);
         await db.SaveChangesAsync(cancellationToken);
+        await todo.DispatchAndClearDomainEventsAsync(domainEvents, cancellationToken);
     }
 
     public async Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
@@ -41,6 +44,7 @@ public sealed class TodoRepository(AppDbContext db) : ITodoRepository
         todo.MarkDeleted();
         db.Todos.Remove(todo);
         await db.SaveChangesAsync(cancellationToken);
+        await todo.DispatchAndClearDomainEventsAsync(domainEvents, cancellationToken);
         return true;
     }
 }
