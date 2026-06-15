@@ -1,5 +1,6 @@
 using TodoPlatform.Domain.Common;
 using TodoPlatform.Domain.Enums;
+using TodoPlatform.Domain.Events;
 
 namespace TodoPlatform.Domain.Entities;
 
@@ -27,7 +28,7 @@ public class Todo : Entity
         if (userId == Guid.Empty)
             throw new ArgumentException("User id is required.", nameof(userId));
 
-        return new Todo
+        var todo = new Todo
         {
             Title = title.Trim(),
             UserId = userId,
@@ -35,13 +36,23 @@ public class Todo : Entity
             Priority = priority,
             Completed = false
         };
+
+        todo.RaiseDomainEvent(new TodoCreatedEvent(todo.Id, userId, todo.Title));
+        return todo;
     }
 
     public void Complete()
     {
+        if (Completed)
+            return;
+
         Completed = true;
         Status = TodoStatus.Done;
+        RaiseDomainEvent(new TodoCompletedEvent(Id, UserId));
     }
+
+    public void MarkDeleted() =>
+        RaiseDomainEvent(new TodoDeletedEvent(Id, UserId));
 
     public void UpdateTitle(string title)
     {
@@ -53,10 +64,14 @@ public class Todo : Entity
 
     public void SetCompleted(bool completed)
     {
-        Completed = completed;
         if (completed)
-            Status = TodoStatus.Done;
-        else if (Status == TodoStatus.Done)
+        {
+            Complete();
+            return;
+        }
+
+        Completed = false;
+        if (Status == TodoStatus.Done)
             Status = TodoStatus.Todo;
     }
 

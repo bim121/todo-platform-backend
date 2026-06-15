@@ -38,6 +38,7 @@ public sealed class TodoRepository(AppDbContext db) : ITodoRepository
         if (todo is null)
             return false;
 
+        todo.MarkDeleted();
         db.Todos.Remove(todo);
         await db.SaveChangesAsync(cancellationToken);
         return true;
