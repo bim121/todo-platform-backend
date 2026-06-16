@@ -31,7 +31,7 @@
 | B-01 | [b-01-clean-api-theory.md](./b-01-clean-api-theory.md) | placeholder |
 | B-02 | [b-02-openapi-contracts-theory.md](./b-02-openapi-contracts-theory.md) | placeholder |
 | B-03 | [b-03-cqrs-mediatr-theory.md](./b-03-cqrs-mediatr-theory.md) | placeholder |
-| B-04 | [b-04-domain-events-theory.md](./b-04-domain-events-theory.md) | placeholder |
+| B-04 | [b-04-domain-events-theory.md](./b-04-domain-events-theory.md) | **full** |
 | B-05 | [b-05-keycloak-auth-theory.md](./b-05-keycloak-auth-theory.md) | placeholder |
 | B-06 | [b-06-redis-caching-theory.md](./b-06-redis-caching-theory.md) | placeholder |
 | B-07 | [b-07-rabbitmq-basics-theory.md](./b-07-rabbitmq-basics-theory.md) | placeholder |

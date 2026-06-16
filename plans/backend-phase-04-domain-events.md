@@ -1,6 +1,6 @@
 ﻿# Backend Phase B-04 — Domain Events, Specifications, Unit of Work
 
-> **Теория:** [guides/b-04-domain-events-theory.md](./guides/b-04-domain-events-theory.md) — статус: placeholder  
+> **Теория:** [guides/b-04-domain-events-theory.md](./guides/b-04-domain-events-theory.md) — статус: **full** · **ADR:** [docs/adr/021-domain-events.md](../docs/adr/021-domain-events.md)
 > **Обязательно прочитать:** [guides/b-00-architecture-and-cqrs-theory.md](./guides/b-00-architecture-and-cqrs-theory.md)
 
 **Длительность:** 2–3 недели (20–30 ч)  
