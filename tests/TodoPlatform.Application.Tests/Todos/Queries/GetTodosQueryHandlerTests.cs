@@ -1,8 +1,10 @@
 using Moq;
 using TodoPlatform.Application.Interfaces;
 using TodoPlatform.Application.Todos.Queries.GetTodos;
+using TodoPlatform.Application.Todos.Specifications;
 using TodoPlatform.Domain.Entities;
 using TodoPlatform.Domain.Enums;
+using TodoPlatform.Domain.Specifications;
 
 namespace TodoPlatform.Application.Tests.Todos.Queries;
 
@@ -20,7 +22,7 @@ public sealed class GetTodosQueryHandlerTests
 
         var repository = new Mock<ITodoRepository>();
         repository
-            .Setup(r => r.GetByUserIdAsync(userId, It.IsAny<CancellationToken>()))
+            .Setup(r => r.ListAsync(It.IsAny<Specification<Todo>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(todos);
 
         var handler = new GetTodosQueryHandler(repository.Object);
@@ -30,5 +32,11 @@ public sealed class GetTodosQueryHandlerTests
         Assert.Equal("First", result[0].Title);
         Assert.Equal("low", result[0].Priority);
         Assert.Equal("in_progress", result[1].Status);
+
+        repository.Verify(
+            r => r.ListAsync(
+                It.Is<Specification<Todo>>(s => s is TodoByUserSpecification),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 }

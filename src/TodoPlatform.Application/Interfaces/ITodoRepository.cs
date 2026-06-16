@@ -1,4 +1,5 @@
 using TodoPlatform.Domain.Entities;
+using TodoPlatform.Domain.Specifications;
 
 namespace TodoPlatform.Application.Interfaces;
 
@@ -8,8 +9,10 @@ namespace TodoPlatform.Application.Interfaces;
 /// </summary>
 public interface ITodoRepository
 {
-    /// <summary>B-03: <c>GetTodosQuery</c></summary>
-    Task<IReadOnlyList<Todo>> GetByUserIdAsync(Guid userId, CancellationToken cancellationToken = default);
+    /// <summary>B-04: list via <see cref="Specification{T}"/> (e.g. <c>TodoByUserSpecification</c>).</summary>
+    Task<IReadOnlyList<Todo>> ListAsync(
+        Specification<Todo> specification,
+        CancellationToken cancellationToken = default);
 
     /// <summary>B-03: <c>GetTodoByIdQuery</c></summary>
     Task<Todo?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);

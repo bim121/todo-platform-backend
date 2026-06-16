@@ -1,20 +1,25 @@
 using Microsoft.EntityFrameworkCore;
 using TodoPlatform.Application.Interfaces;
 using TodoPlatform.Domain.Entities;
+using TodoPlatform.Domain.Specifications;
 using TodoPlatform.Infrastructure.Persistence;
 
 namespace TodoPlatform.Infrastructure.Repositories;
 
-public sealed class TodoRepository(AppDbContext db) : ITodoRepository
+public sealed class TodoRepository(AppDbContext db, ISpecificationEvaluator evaluator) : ITodoRepository
 {
-    public async Task<IReadOnlyList<Todo>> GetByUserIdAsync(
-        Guid userId,
-        CancellationToken cancellationToken = default) =>
-        await db.Todos
-            .AsNoTracking()
-            .Where(t => t.UserId == userId)
-            .OrderBy(t => t.Title)
-            .ToListAsync(cancellationToken);
+    public async Task<IReadOnlyList<Todo>> ListAsync(
+        Specification<Todo> specification,
+        CancellationToken cancellationToken = default)
+    {
+        var query = db.Todos.AsQueryable();
+
+        if (specification.AsNoTracking)
+            query = query.AsNoTracking();
+
+        query = evaluator.GetQuery(query, specification);
+        return await query.ToListAsync(cancellationToken);
+    }
 
     public Task<Todo?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
         db.Todos.FirstOrDefaultAsync(t => t.Id == id, cancellationToken);

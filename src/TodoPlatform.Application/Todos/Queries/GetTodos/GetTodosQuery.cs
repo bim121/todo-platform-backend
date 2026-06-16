@@ -1,6 +1,7 @@
 using MediatR;
 using TodoPlatform.Application.Dtos;
 using TodoPlatform.Application.Interfaces;
+using TodoPlatform.Application.Todos.Specifications;
 
 namespace TodoPlatform.Application.Todos.Queries.GetTodos;
 
@@ -13,7 +14,9 @@ public sealed class GetTodosQueryHandler(ITodoRepository repository)
         GetTodosQuery request,
         CancellationToken cancellationToken)
     {
-        var todos = await repository.GetByUserIdAsync(request.UserId, cancellationToken);
+        var todos = await repository.ListAsync(
+            new TodoByUserSpecification(request.UserId),
+            cancellationToken);
         return todos.Select(TodoDto.FromEntity).ToList();
     }
 }
