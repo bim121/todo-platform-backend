@@ -4,8 +4,8 @@ using TodoPlatform.Domain.Specifications;
 namespace TodoPlatform.Application.Interfaces;
 
 /// <summary>
-/// Temporary data access for todos (replaced by MediatR handlers in B-03).
-/// Method names align with future Commands/Queries.
+/// Todo persistence. List queries use <see cref="Specification{T}"/> via <see cref="ListAsync"/> (B-04).
+/// Ad-hoc methods such as GetByUserId/GetActive were removed in B-04.6.
 /// </summary>
 public interface ITodoRepository
 {

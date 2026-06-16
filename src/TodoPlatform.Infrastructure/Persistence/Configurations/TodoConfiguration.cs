@@ -27,6 +27,9 @@ public class TodoConfiguration : IEntityTypeConfiguration<Todo>
             .IsRequired();
 
         builder.HasIndex(t => t.UserId);
+        builder.HasIndex(t => t.Completed);
+        builder.HasIndex(t => t.Status);
+        builder.HasIndex(t => new { t.UserId, t.Completed });
 
         builder.HasOne<User>()
             .WithMany()
