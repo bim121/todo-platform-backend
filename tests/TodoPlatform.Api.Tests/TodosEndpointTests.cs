@@ -58,6 +58,27 @@ public class TodosEndpointTests : IClassFixture<TodoPlatformWebApplicationFactor
     }
 
     [Fact]
+    public async Task GetTodos_WithPaging_ReturnsSubset()
+    {
+        var response = await _client.GetAsync($"/api/todos?userId={_userId}&skip=0&take=1");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var todos = await response.Content.ReadFromJsonAsync<List<TodoDto>>();
+        Assert.NotNull(todos);
+        Assert.Single(todos);
+    }
+
+    [Fact]
+    public async Task GetTodos_InvalidTake_ReturnsValidationProblemDetails()
+    {
+        var response = await _client.GetAsync($"/api/todos?userId={_userId}&take=0");
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
+    }
+
+    [Fact]
     public async Task GetTodo_NotFound_ReturnsProblemDetails()
     {
         var response = await _client.GetAsync($"/api/todos/{Guid.NewGuid()}");

@@ -39,4 +39,43 @@ public sealed class GetTodosQueryHandlerTests
                 It.IsAny<CancellationToken>()),
             Times.Once);
     }
+
+    [Fact]
+    public async Task Handle_ActiveOnly_UsesCombinedSpecification()
+    {
+        var userId = Guid.NewGuid();
+        Specification<Todo>? captured = null;
+
+        var repository = new Mock<ITodoRepository>();
+        repository
+            .Setup(r => r.ListAsync(It.IsAny<Specification<Todo>>(), It.IsAny<CancellationToken>()))
+            .Callback<Specification<Todo>, CancellationToken>((spec, _) => captured = spec)
+            .ReturnsAsync([]);
+
+        var handler = new GetTodosQueryHandler(repository.Object);
+        await handler.Handle(new GetTodosQuery(userId, ActiveOnly: true), CancellationToken.None);
+
+        Assert.NotNull(captured);
+        Assert.IsNotType<TodoByUserSpecification>(captured);
+    }
+
+    [Fact]
+    public async Task Handle_WithPaging_UsesCombinedSpecification()
+    {
+        var userId = Guid.NewGuid();
+        Specification<Todo>? captured = null;
+
+        var repository = new Mock<ITodoRepository>();
+        repository
+            .Setup(r => r.ListAsync(It.IsAny<Specification<Todo>>(), It.IsAny<CancellationToken>()))
+            .Callback<Specification<Todo>, CancellationToken>((spec, _) => captured = spec)
+            .ReturnsAsync([]);
+
+        var handler = new GetTodosQueryHandler(repository.Object);
+        await handler.Handle(new GetTodosQuery(userId, Skip: 2, Take: 5), CancellationToken.None);
+
+        Assert.NotNull(captured);
+        Assert.Equal(2, captured!.Skip);
+        Assert.Equal(5, captured.Take);
+    }
 }

@@ -21,15 +21,23 @@ public class TodosController(IMediator mediator) : ControllerBase
     /// List todos for a user.
     /// </summary>
     /// <param name="userId">Owner user id.</param>
+    /// <param name="activeOnly">When true, return only incomplete todos.</param>
+    /// <param name="skip">Number of items to skip (pagination).</param>
+    /// <param name="take">Maximum number of items to return (pagination).</param>
     /// <param name="cancellationToken">Request cancellation token.</param>
     [HttpGet]
     [ProducesResponseType(typeof(IReadOnlyList<TodoDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<IReadOnlyList<TodoDto>>> List(
         [FromQuery] Guid userId,
-        CancellationToken cancellationToken)
+        [FromQuery] bool activeOnly = false,
+        [FromQuery] int? skip = null,
+        [FromQuery] int? take = null,
+        CancellationToken cancellationToken = default)
     {
-        var todos = await mediator.Send(new GetTodosQuery(userId), cancellationToken);
+        var todos = await mediator.Send(
+            new GetTodosQuery(userId, activeOnly, skip, take),
+            cancellationToken);
         return Ok(todos);
     }
 
