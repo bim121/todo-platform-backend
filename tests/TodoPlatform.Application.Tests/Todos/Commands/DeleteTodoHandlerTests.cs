@@ -16,16 +16,10 @@ public sealed class DeleteTodoHandlerTests
             .Setup(r => r.DeleteAsync(id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
-        var unitOfWork = new Mock<IUnitOfWork>();
-        unitOfWork
-            .Setup(u => u.CommitAsync(It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-
-        var handler = new DeleteTodoHandler(repository.Object, unitOfWork.Object);
+        var handler = new DeleteTodoHandler(repository.Object);
         await handler.Handle(new DeleteTodoCommand(id), CancellationToken.None);
 
         repository.Verify(r => r.DeleteAsync(id, It.IsAny<CancellationToken>()), Times.Once);
-        unitOfWork.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -37,8 +31,7 @@ public sealed class DeleteTodoHandlerTests
             .Setup(r => r.DeleteAsync(id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
 
-        var unitOfWork = new Mock<IUnitOfWork>();
-        var handler = new DeleteTodoHandler(repository.Object, unitOfWork.Object);
+        var handler = new DeleteTodoHandler(repository.Object);
 
         await Assert.ThrowsAsync<NotFoundException>(() =>
             handler.Handle(new DeleteTodoCommand(id), CancellationToken.None));

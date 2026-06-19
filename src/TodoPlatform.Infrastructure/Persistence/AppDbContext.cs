@@ -14,6 +14,8 @@ public class AppDbContext : DbContext
 
     public DbSet<Todo> Todos => Set<Todo>();
 
+    public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);

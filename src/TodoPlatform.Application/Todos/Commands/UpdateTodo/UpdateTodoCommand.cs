@@ -8,7 +8,7 @@ namespace TodoPlatform.Application.Todos.Commands.UpdateTodo;
 
 public sealed record UpdateTodoCommand(Guid Id, UpdateTodoRequest Body) : IRequest<TodoDto>, ICommand;
 
-public sealed class UpdateTodoHandler(ITodoRepository repository, IUnitOfWork unitOfWork)
+public sealed class UpdateTodoHandler(ITodoRepository repository)
     : IRequestHandler<UpdateTodoCommand, TodoDto>
 {
     public async Task<TodoDto> Handle(UpdateTodoCommand request, CancellationToken cancellationToken)
@@ -21,7 +21,6 @@ public sealed class UpdateTodoHandler(ITodoRepository repository, IUnitOfWork un
         {
             request.Body.ApplyTo(todo);
             await repository.UpdateAsync(todo, cancellationToken);
-            await unitOfWork.CommitAsync(cancellationToken);
             return TodoDto.FromEntity(todo);
         }
         catch (ArgumentException ex)

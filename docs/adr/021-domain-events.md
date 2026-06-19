@@ -1,10 +1,10 @@
-# ADR-021: Domain Events, dispatch и Unit of Work
+# ADR-021: Domain Events, dispatch, Unit of Work и Outbox
 
 | | |
 |---|---|
 | **Статус** | Accepted |
-| **Дата** | 2026-06-02 |
-| **Фаза** | B-04 (частично: B-04.1–B-04.3) |
+| **Дата** | 2026-06-02 (обновлено: B-04.7–B-04.9) |
+| **Фаза** | B-04 (B-04.1–B-04.9) |
 | **Теория** | [plans/guides/b-04-domain-events-theory.md](../../plans/guides/b-04-domain-events-theory.md) |
 
 ---
@@ -16,13 +16,7 @@
 1. Фиксировать **факты** в domain (`TodoCreated`), а не дублировать бизнес-логику в Application.
 2. Dispatch **после** успешного сохранения в БД, не до.
 3. Не dispatch при failed transaction / failed `SaveChanges`.
-4. Подготовить путь к **transactional outbox** (B-07) без смены domain model.
-
-Рассматривались варианты:
-
-- Dispatch в репозитории сразу после `SaveChanges` (отклонено в B-04.3).
-- EF interceptor на `SaveChanges` (магия, сложнее unit-тесты).
-- Только прямые вызовы сервисов из handler (нет единой точки для outbox).
+4. **Transactional outbox** — domain events и данные в одной TX (B-04.8); publisher в B-07.
 
 ---
 
@@ -34,50 +28,63 @@
 |-----|-----|------------------|
 | **Command** | Application (`CreateTodoCommand`) | HTTP → `IMediator.Send` |
 | **Domain Event** | Domain (`TodoCreatedEvent`) | In-process → `IMediator.Publish` |
-| **Integration Event** | B-07+ (`TodoCreatedIntegrationEvent`) | Outbox → RabbitMQ (не реализовано) |
-
-Domain events **не** экспортируются наружу как публичный API. Маппинг в integration event — в infrastructure/outbox (будущее).
+| **Integration Event** | B-07+ | Outbox row → MassTransit publisher |
 
 ### 2. Поднятие событий — только в агрегате
 
 - `Entity.RaiseDomainEvent()` / `ClearDomainEvents()` в `TodoPlatform.Domain`.
-- `Todo.Create()`, `Complete()`, `MarkDeleted()` поднимают `TodoCreatedEvent`, `TodoCompletedEvent`, `TodoDeletedEvent`.
-- События реализуют `IDomainEvent` и `MediatR.INotification` (пакет `MediatR.Contracts` в Domain).
+- `Todo.Create()`, `Complete()`, `MarkDeleted()` поднимают события.
+- События: `IDomainEvent` + `INotification`.
 
 ### 3. Repository не коммитит
 
-`ITodoRepository` только стейджит изменения в `AppDbContext` (`Add` / `Update` / `Remove`). **Без** `SaveChangesAsync` и **без** dispatch.
+`ITodoRepository` только стейджит в `AppDbContext`. Без `SaveChanges` и dispatch.
 
-### 4. Unit of Work — единая точка commit
+### 4. Unit of Work (B-04.7)
 
-`IUnitOfWork.CommitAsync()` (`EfUnitOfWork`):
+`IUnitOfWork`:
 
-1. Собрать domain events с tracked `Entity`.
-2. `SaveChangesAsync`.
-3. `ClearDomainEvents` на сущностях.
-4. `IDomainEventDispatcher.DispatchEventsAsync` → `mediator.Publish`.
+- `Repository<T>()` — generic `EfRepository<T>`
+- `Add<T>(entity)` — стейдж в ChangeTracker
+- `CommitAsync()` — outbox + SaveChanges + ClearEvents + dispatch
+- `RollbackAsync()` — ClearDomainEvents + ChangeTracker.Clear()
 
-Command handlers вызывают: `repository.*` → `unitOfWork.CommitAsync()`.
+**Command handlers не вызывают `CommitAsync`.** Commit выполняет `TransactionBehavior` после успешного handler.
 
-### 5. In-process handlers
+### 5. TransactionBehavior (B-04.7)
 
-`DomainEventDispatcher` в Application. Примеры:
+Для `ICommand`:
 
-- `TodoCreatedAuditHandler` — structured log (задел под B-16 audit).
-- `TodoCreatedCacheInvalidator` — stub до B-06.
+```
+BeginTransaction (PostgreSQL only)
+  → handler (stage changes)
+  → unitOfWork.CommitAsync()
+  → CommitTransaction
+```
 
-Новые side effects добавляются как `INotificationHandler<TDomainEvent>`, не правкой command handler.
+InMemory: без TX, но `CommitAsync` / `RollbackAsync` на UoW всё равно вызываются.
 
-### 6. Транзакции
+### 6. Transactional Outbox (B-04.8)
 
-`TransactionBehavior` оборачивает **только** `ICommand` на relational DB:
+Таблица `outbox_messages` (FluentMigrator **V004**):
 
-- `BeginTransaction` → handler (включая `CommitAsync`) → `Commit` / `Rollback`.
-- InMemory provider: behavior пропускает TX, `CommitAsync` всё равно выполняется.
+| Column | Type |
+|--------|------|
+| Id | uuid PK |
+| Type | varchar(500) — CLR type name |
+| Payload | jsonb — `System.Text.Json` |
+| CreatedAt | timestamptz |
+| ProcessedAt | timestamptz nullable |
 
-### 7. Outbox (отложено)
+`IOutboxStore.Stage(events)` вызывается в `CommitAsync` **до** `SaveChanges` — outbox и агрегат в одной транзакции.
 
-Запись в `outbox_messages` при `CommitAsync` — **B-04.8 / B-07**, не в этом ADR revision.
+Publisher (MassTransit, B-07) читает `ProcessedAt IS NULL` и помечает обработанные.
+
+### 7. In-process handlers
+
+`DomainEventDispatcher` → `TodoCreatedAuditHandler`, `TodoCreatedCacheInvalidator` (stub).
+
+Dispatch **после** SaveChanges (handlers видят persisted data). Outbox уже записан в той же TX.
 
 ---
 
@@ -85,21 +92,16 @@ Command handlers вызывают: `repository.*` → `unitOfWork.CommitAsync()`
 
 ### Положительные
 
-- Чёткая граница: domain поднимает, UoW сохраняет и dispatch'ит, handlers реагируют.
-- Репозиторий проще тестировать и переиспользовать в одной транзакции (несколько aggregate — позже).
-- Outbox можно вставить в `EfUnitOfWork` без изменения `Todo.Create()`.
-- Rollback: при падении `SaveChanges` dispatch не вызывается (покрыто тестом).
+- Единая точка commit: outbox + persistence + dispatch.
+- Handlers тонкие — только бизнес-стейджинг.
+- Outbox готов к B-07 без смены domain model.
+- Rollback: handler exception → `RollbackAsync`, нет outbox rows.
 
-### Отрицательные / ограничения
+### Ограничения
 
-- Два entry point MediatR (`Send` vs `Publish`) — нужна дисциплина в команде.
-- In-process dispatch: падение handler откатывает внешнюю TX на PostgreSQL, но не даёт retry как очередь.
-- `TodoCompletedEvent` / `TodoDeletedEvent` пока без handlers.
-- `TransactionBehavior` ещё использует `AppDbContext` напрямую, не `IUnitOfWork` (рефактор в B-04.7).
-
-### Риски до outbox
-
-Если процесс упал **после** `SaveChanges`, но **до** dispatch — in-process событие потеряно. Mitigation: transactional outbox (B-07).
+- In-process dispatch всё ещё синхронный; outbox mitigates потерю при crash после commit.
+- `ProcessedAt` не обновляется до B-07.
+- Publisher не реализован в B-04.8 (schema + stage only).
 
 ---
 
@@ -107,20 +109,19 @@ Command handlers вызывают: `repository.*` → `unitOfWork.CommitAsync()`
 
 | Компонент | Путь |
 |-----------|------|
-| Domain event marker | `src/TodoPlatform.Domain/Common/IDomainEvent.cs` |
-| Entity events collection | `src/TodoPlatform.Domain/Common/Entity.cs` |
-| Todo events | `src/TodoPlatform.Domain/Events/` |
-| Dispatcher | `src/TodoPlatform.Application/Common/DomainEventDispatcher.cs` |
-| UoW interface | `src/TodoPlatform.Application/Interfaces/IUnitOfWork.cs` |
-| UoW impl | `src/TodoPlatform.Infrastructure/Persistence/EfUnitOfWork.cs` |
-| Repository (stage only) | `src/TodoPlatform.Infrastructure/Repositories/TodoRepository.cs` |
-| Create handler | `src/TodoPlatform.Application/Todos/Commands/CreateTodo/CreateTodoCommand.cs` |
-| Transaction | `src/TodoPlatform.Infrastructure/Behaviors/TransactionBehavior.cs` |
+| IUnitOfWork | `src/TodoPlatform.Application/Interfaces/IUnitOfWork.cs` |
+| IOutboxStore | `src/TodoPlatform.Application/Interfaces/IOutboxStore.cs` |
+| EfUnitOfWork | `src/TodoPlatform.Infrastructure/Persistence/EfUnitOfWork.cs` |
+| EfOutboxStore | `src/TodoPlatform.Infrastructure/Persistence/EfOutboxStore.cs` |
+| OutboxMessage | `src/TodoPlatform.Infrastructure/Persistence/OutboxMessage.cs` |
+| Migration V004 | `src/TodoPlatform.Infrastructure/Migrations/V004_CreateOutboxMessages.cs` |
+| TransactionBehavior | `src/TodoPlatform.Infrastructure/Behaviors/TransactionBehavior.cs` |
 | Tests | `tests/TodoPlatform.Infrastructure.Tests/Persistence/EfUnitOfWorkTests.cs` |
+| Tests | `tests/TodoPlatform.Infrastructure.Tests/Behaviors/TransactionBehaviorTests.cs` |
 
 ---
 
-## Связанные ADR (planned)
+## Связанные ADR
 
-- **ADR-023** — transactional outbox (B-07)
+- **ADR-023** — outbox publisher + MassTransit (B-07)
 - **ADR-022** — cache invalidation on domain events (B-06)

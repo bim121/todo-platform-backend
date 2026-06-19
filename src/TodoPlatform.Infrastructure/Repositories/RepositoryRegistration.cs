@@ -11,6 +11,7 @@ public static class RepositoryRegistration
         services.AddScoped<ITodoRepository, TodoRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IUnitOfWork, EfUnitOfWork>();
+        services.AddScoped<IOutboxStore, EfOutboxStore>();
         services.AddScoped<ISpecificationEvaluator, SpecificationEvaluator>();
         return services;
     }
