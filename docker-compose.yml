@@ -12,7 +12,10 @@ services:
 
   keycloak:
     image: quay.io/keycloak/keycloak:26.0.7
-    command: start-dev --import-realm
+    command:
+      - start-dev
+      - --import-realm
+      - --spi-import-export-import-strategy=OVERWRITE_EXISTING
     environment:
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
