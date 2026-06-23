@@ -21,6 +21,7 @@
 | 10 | Design chat at scale | B-13 SignalR |
 | 11 | GraphQL BFF vs REST for admin dashboard | B-10 |
 | 12 | gRPC vs REST between microservices | B-17 |
+| 13 | Concurrency at scale (channels vs threads) | **B-33** |
 
 **Формат:** `docs/system-design/backend/NN-<name>.md`
 
@@ -43,6 +44,7 @@
 | 5–8 | Read replicas, pooling | B-20 |
 | 9–12 | Partitioning, sharding | B-21 |
 | 13+ | Load testing, locks | B-22 |
+| 14+ | Channels, Parallel.ForEachAsync | **B-33** |
 
 ---
 
@@ -57,10 +59,25 @@
 | Minimal APIs vs Controllers | B-02 |
 | Hot Chocolate GraphQL | B-10 |
 | gRPC + protobuf | B-17 |
+| Concurrency | Channels, IAsyncEnumerable, BenchmarkDotNet | **B-33** |
 
 ---
 
-## 4. DevOps & Cloud
+## 4. Concurrency depth (B-33 / J-33)
+
+| Тема | .NET | Java/Spring |
+|------|------|-------------|
+| I/O-bound parallelism | async/await, Channels | Virtual Threads |
+| Bulk operations | `Parallel.ForEachAsync` | `newVirtualThreadPerTaskExecutor()` |
+| Background work | `BackgroundService` + Channel | `@Async` + event listeners |
+| Streaming | `IAsyncEnumerable` | `StreamingResponseBody` |
+| Benchmark | BenchmarkDotNet | JMH |
+
+Java track: [J-33](../../todo-platform-java/plans/java-phase-33-concurrency-virtual-threads.md)
+
+---
+
+## 5. DevOps & Cloud
 
 | Тема | Фаза |
 |------|------|
@@ -72,8 +89,9 @@
 
 ---
 
-## 5. Interview mock schedule
+## 6. Interview mock schedule
 
 - 1 backend system design mock / 2 weeks (after B-10)
+- 1 concurrency deep dive mock (after **B-33**)
 - 1 coding (LeetCode medium) / week — shared with frontend track
 - Microsoft-style: behavioral + architecture deep dive

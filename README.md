@@ -25,7 +25,8 @@ dotnet run --project src/TodoPlatform.Api
 ```
 d:\programing\ngrx\
 ├── anular-ngrx-todo-auth\     # Angular + NgRx
-├── todo-platform-backend\      # ← этот репозиторий
+├── todo-platform-backend\      # ← ASP.NET Core (.NET)
+├── todo-platform-java\         # Spring Boot (Java) — parity track
 └── contracts\openapi.yaml
 ```
 
@@ -40,7 +41,7 @@ d:\programing\ngrx\
 
 | Документ | Описание |
 |----------|----------|
-| [plans/README.md](./plans/README.md) | Все фазы B-00 … B-31 |
+| [plans/README.md](./plans/README.md) | Все фазы B-00 … **B-33** |
 | [plans/backend-phase-00-foundation.md](./plans/backend-phase-00-foundation.md) | Текущая/завершённая фаза |
 | [plans/guides/](./plans/guides/) | Теория (B-00 full) |
 | [plans/integration-sync.md](./plans/integration-sync.md) | Когда подключать фронт |

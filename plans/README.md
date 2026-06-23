@@ -2,6 +2,7 @@
 
 **Темп:** 24–30 месяцев, 5–10 ч/нед. **Независимо** от Angular-фронта.  
 **Frontend:** [`../anular-ngrx-todo-auth`](../anular-ngrx-todo-auth) — подключается по готовности.  
+**Java twin track:** [`../todo-platform-java`](../todo-platform-java) — те же 34 фазы (J-00…J-33).  
 **Теория:** [`guides/README.md`](./guides/README.md)  
 **Интеграция:** [`integration-sync.md`](./integration-sync.md)
 
@@ -44,8 +45,9 @@
 | B-30 | [backend-phase-30-security-hardening.md](./backend-phase-30-security-hardening.md) | OWASP API Top 10 |
 | B-31 | [backend-phase-31-system-design-capstone.md](./backend-phase-31-system-design-capstone.md) | System design capstone |
 | ~~B-32~~ | [backend-phase-32-graphql-grpc.md](./backend-phase-32-graphql-grpc.md) | **→ перенесена** в B-10 + B-17 |
+| **B-33** | [backend-phase-33-concurrency-parallelism.md](./backend-phase-33-concurrency-parallelism.md) | **Concurrency & Channels** |
 
-> **GraphQL** — [B-10](./backend-phase-10-complex-sql-readmodels.md) (после read models). **gRPC** — [B-17](./backend-phase-17-microservices-split.md) (в момент split). B-32 — redirect для старых ссылок.
+> **GraphQL** — [B-10](./backend-phase-10-complex-sql-readmodels.md) (после read models). **gRPC** — [B-17](./backend-phase-17-microservices-split.md) (в момент split). **Concurrency** — [B-33](./backend-phase-33-concurrency-parallelism.md). B-32 — redirect для старых ссылок.
 
 ---
 
@@ -58,6 +60,7 @@
 | Replication, PgBouncer | B-20 |
 | Partitioning, sharding | B-21 |
 | pgBench, k6, locks | B-22 |
+| Async, Channels, Parallel.ForEachAsync | **B-33** |
 
 ---
 
@@ -71,6 +74,7 @@ Modular Monolith (B-00…B-16)
                           └── GraphQL BFF on monolith (B-10)
                                 └── Microservices + gRPC (B-17)
                                       └── Event-Driven + Saga (B-16, B-18)
+                                            └── Concurrency & Channels (B-33)
 ```
 
 ---

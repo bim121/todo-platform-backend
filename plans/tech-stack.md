@@ -27,7 +27,7 @@
 | Load test | k6, BenchmarkDotNet | B-22 |
 | Contract | OpenAPI 3.1 in `../../contracts/` | B-02 |
 | **GraphQL** | Hot Chocolate | **B-10** |
-| **gRPC** | Grpc.AspNetCore, protobuf | **B-17** |
+| **Concurrency** | IAsyncEnumerable, Channels, Parallel.ForEachAsync | **B-33** |
 
 ## Azure-first (Microsoft interviews)
 

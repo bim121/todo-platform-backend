@@ -60,6 +60,7 @@
 | B-30 | [b-30-security-hardening-theory.md](./b-30-security-hardening-theory.md) | placeholder |
 | B-31 | [b-31-system-design-capstone-theory.md](./b-31-system-design-capstone-theory.md) | placeholder |
 | **B-32** | [b-32-graphql-grpc-theory.md](./b-32-graphql-grpc-theory.md) | index → B-10 + B-17 |
+| **B-33** | [b-33-concurrency-parallelism-theory.md](./b-33-concurrency-parallelism-theory.md) | placeholder |
 
 ---
 

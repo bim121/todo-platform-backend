@@ -23,7 +23,9 @@ Backend разрабатывается **независимо**. Frontend под
 | 15 | Phase 14 + Admin v1 | B-12, B-28 | Admin (GraphQL optional) |
 | 16 | Phase 15 + Admin v2 | B-28 | Blue/green UI |
 | 17 | Phase 18 AI | B-29 | Semantic search |
-| 18+ | Phase 16 CDN | B-20 → B-31 | Full stack deploy |
+| 18+ | Phase 16 CDN | B-20 → B-31, **B-33** | Full stack deploy |
+
+**Java track:** те же фазы J-00…J-33 — [integration-sync.md](../../todo-platform-java/plans/integration-sync.md).
 
 ---
 

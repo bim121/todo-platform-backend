@@ -155,4 +155,5 @@ wc -w docs/system-design/backend/*.md
 
 ## Следующая фаза
 
-→ **Capstone complete.** Portfolio polish, mock interviews, production hardening backlog.
+→ [B-33 Concurrency & Parallelism](./backend-phase-33-concurrency-parallelism.md) (рекомендуется после capstone или параллельно с B-22)  
+→ Portfolio: [B-31 System Design Capstone](./backend-phase-31-system-design-capstone.md)
