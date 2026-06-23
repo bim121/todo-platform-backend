@@ -1,0 +1,13 @@
+{
+  "id": "todo-platform",
+  "realm": "todo-platform",
+  "displayName": "Todo Platform",
+  "enabled": true,
+  "sslRequired": "none",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": false,
+  "editUsernameAllowed": false,
+  "bruteForceProtected": false
+}
