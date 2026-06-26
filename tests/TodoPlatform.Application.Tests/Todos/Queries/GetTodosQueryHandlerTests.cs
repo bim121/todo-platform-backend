@@ -1,5 +1,6 @@
 using Moq;
 using TodoPlatform.Application.Interfaces;
+using TodoPlatform.Application.Services;
 using TodoPlatform.Application.Todos.Queries.GetTodos;
 using TodoPlatform.Application.Todos.Specifications;
 using TodoPlatform.Domain.Entities;
@@ -25,7 +26,10 @@ public sealed class GetTodosQueryHandlerTests
             .Setup(r => r.ListAsync(It.IsAny<Specification<Todo>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(todos);
 
-        var handler = new GetTodosQueryHandler(repository.Object);
+        var currentUser = new Mock<ICurrentUserService>();
+        currentUser.Setup(c => c.UserId).Returns(userId);
+
+        var handler = new GetTodosQueryHandler(repository.Object, currentUser.Object);
         var result = await handler.Handle(new GetTodosQuery(userId), CancellationToken.None);
 
         Assert.Equal(2, result.Count);
@@ -52,7 +56,10 @@ public sealed class GetTodosQueryHandlerTests
             .Callback<Specification<Todo>, CancellationToken>((spec, _) => captured = spec)
             .ReturnsAsync([]);
 
-        var handler = new GetTodosQueryHandler(repository.Object);
+        var currentUser = new Mock<ICurrentUserService>();
+        currentUser.Setup(c => c.UserId).Returns(userId);
+
+        var handler = new GetTodosQueryHandler(repository.Object, currentUser.Object);
         await handler.Handle(new GetTodosQuery(userId, ActiveOnly: true), CancellationToken.None);
 
         Assert.NotNull(captured);
@@ -71,7 +78,10 @@ public sealed class GetTodosQueryHandlerTests
             .Callback<Specification<Todo>, CancellationToken>((spec, _) => captured = spec)
             .ReturnsAsync([]);
 
-        var handler = new GetTodosQueryHandler(repository.Object);
+        var currentUser = new Mock<ICurrentUserService>();
+        currentUser.Setup(c => c.UserId).Returns(userId);
+
+        var handler = new GetTodosQueryHandler(repository.Object, currentUser.Object);
         await handler.Handle(new GetTodosQuery(userId, Skip: 2, Take: 5), CancellationToken.None);
 
         Assert.NotNull(captured);

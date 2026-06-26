@@ -12,6 +12,7 @@ public sealed class OpenApiContractTests(OpenApiWebApplicationFactory factory)
         "/api/auth/register",
         "/api/todos",
         "/api/todos/{id}",
+        "/api/admin/tenants",
         "/api/Health"
     ];
 
@@ -19,7 +20,6 @@ public sealed class OpenApiContractTests(OpenApiWebApplicationFactory factory)
     [
         "/users",
         "/tenants/{id}/config",
-        "/admin/tenants",
         "/search"
     ];
 

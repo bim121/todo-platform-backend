@@ -9,10 +9,6 @@ public sealed class GetTodosQueryValidator : AbstractValidator<GetTodosQuery>
 
     public GetTodosQueryValidator()
     {
-        RuleFor(x => x.UserId)
-            .NotEmpty()
-            .WithMessage("Query parameter 'userId' is required.");
-
         RuleFor(x => x.Skip)
             .GreaterThanOrEqualTo(0)
             .When(x => x.Skip.HasValue)

@@ -22,7 +22,7 @@ public class TodosEndpointTests : IClassFixture<TodoPlatformWebApplicationFactor
     {
         await _factory.EnsureDatabaseSeededAsync();
         _userId = await _factory.GetTestUserIdAsync();
-        _client = _factory.CreateClient();
+        _client = _factory.CreateAuthenticatedClient();
     }
 
     public Task DisposeAsync() => Task.CompletedTask;
@@ -103,6 +103,28 @@ public class TodosEndpointTests : IClassFixture<TodoPlatformWebApplicationFactor
         var json = await response.Content.ReadAsStringAsync();
         Assert.Contains("errors", json);
         Assert.Contains("title", json);
+    }
+
+    [Fact]
+    public async Task GetTodos_WithoutToken_ReturnsUnauthorized()
+    {
+        var response = await _factory.CreateClient().GetAsync($"/api/todos?userId={_userId}");
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
+    }
+
+    [Fact]
+    public async Task GetTodos_WithoutUserId_UsesAuthenticatedUser()
+    {
+        var response = await _client.GetAsync("/api/todos");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var todos = await response.Content.ReadFromJsonAsync<List<TodoDto>>();
+        Assert.NotNull(todos);
+        Assert.True(todos.Count >= 3);
+        Assert.All(todos, todo => Assert.Equal(_userId, todo.UserId));
     }
 
     [Fact]

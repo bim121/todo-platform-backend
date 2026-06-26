@@ -1,4 +1,5 @@
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TodoPlatform.Application.Dtos;
 using TodoPlatform.Application.Todos.Commands.CreateTodo;
@@ -14,13 +15,14 @@ namespace TodoPlatform.Api.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/todos")]
+[Authorize]
 [Produces("application/json")]
 public class TodosController(IMediator mediator) : ControllerBase
 {
     /// <summary>
     /// List todos for a user.
     /// </summary>
-    /// <param name="userId">Owner user id.</param>
+    /// <param name="userId">Owner user id. When omitted, uses the authenticated user.</param>
     /// <param name="activeOnly">When true, return only incomplete todos.</param>
     /// <param name="skip">Number of items to skip (pagination).</param>
     /// <param name="take">Maximum number of items to return (pagination).</param>
@@ -28,8 +30,9 @@ public class TodosController(IMediator mediator) : ControllerBase
     [HttpGet]
     [ProducesResponseType(typeof(IReadOnlyList<TodoDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<IReadOnlyList<TodoDto>>> List(
-        [FromQuery] Guid userId,
+        [FromQuery] Guid? userId = null,
         [FromQuery] bool activeOnly = false,
         [FromQuery] int? skip = null,
         [FromQuery] int? take = null,
@@ -49,6 +52,7 @@ public class TodosController(IMediator mediator) : ControllerBase
     [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(TodoDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<TodoDto>> GetById(Guid id, CancellationToken cancellationToken)
     {
         var todo = await mediator.Send(new GetTodoByIdQuery(id), cancellationToken);

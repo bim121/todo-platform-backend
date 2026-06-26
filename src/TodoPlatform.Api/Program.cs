@@ -1,5 +1,7 @@
 using Serilog;
+using TodoPlatform.Api.Auth;
 using TodoPlatform.Api.Exceptions;
+using TodoPlatform.Api.Extensions;
 using TodoPlatform.Api.Swagger;
 using TodoPlatform.Api.Versioning;
 using TodoPlatform.Application;
@@ -24,7 +26,8 @@ builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddApiSwagger();
+builder.Services.AddApiSwagger(builder.Configuration);
+builder.Services.AddApiAuthentication(builder.Configuration, builder.Environment);
 
 builder.Services.AddHealthChecks();
 
@@ -55,6 +58,10 @@ if (app.Environment.IsDevelopment())
 
 app.UseRouting();
 app.UseCors("Frontend");
+app.UseAuthentication();
+app.UseCurrentUserEnrichment();
+app.UseMiddleware<AuthorizationProblemDetailsMiddleware>();
+app.UseAuthorization();
 app.UseApiVersioning();
 app.UseDeprecationHeaders();
 

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TodoPlatform.Api.Versioning;
 using TodoPlatform.Application.Dtos;
@@ -10,6 +11,7 @@ namespace TodoPlatform.Api.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/auth")]
+[AllowAnonymous]
 [Produces("application/json")]
 public class AuthController(IAuthService authService) : ControllerBase
 {

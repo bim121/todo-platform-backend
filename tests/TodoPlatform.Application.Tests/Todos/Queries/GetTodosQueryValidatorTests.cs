@@ -7,10 +7,10 @@ public sealed class GetTodosQueryValidatorTests
     private readonly GetTodosQueryValidator _validator = new();
 
     [Fact]
-    public void Validate_EmptyUserId_HasError()
+    public void Validate_NullUserId_IsValid()
     {
-        var result = _validator.Validate(new GetTodosQuery(Guid.Empty));
-        Assert.Contains(result.Errors, e => e.PropertyName == nameof(GetTodosQuery.UserId));
+        var result = _validator.Validate(new GetTodosQuery());
+        Assert.True(result.IsValid);
     }
 
     [Fact]
