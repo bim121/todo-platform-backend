@@ -1,0 +1,45 @@
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using TodoPlatform.Application.Interfaces;
+using TodoPlatform.Application.Services;
+using TodoPlatform.Infrastructure.Migrations;
+using TodoPlatform.Infrastructure.Persistence;
+using TodoPlatform.Infrastructure.Repositories;
+using TodoPlatform.Infrastructure.Security;
+using TodoPlatform.Infrastructure.Security;
+
+namespace TodoPlatform.Infrastructure;
+
+public static class DependencyInjection
+{
+    public static IServiceCollection AddInfrastructure(
+        this IServiceCollection services,
+        IConfiguration configuration)
+    {
+        if (configuration.GetValue("Database:UseInMemory", false))
+        {
+            var databaseName = configuration.GetValue<string>("Database:InMemoryName")
+                ?? "TodoPlatformTests";
+
+            services.AddDbContext<AppDbContext>(options =>
+                options.UseInMemoryDatabase(databaseName));
+        }
+        else
+        {
+            var connectionString = configuration.GetConnectionString("Default")
+                ?? throw new InvalidOperationException("Connection string 'Default' is not configured.");
+
+            services.AddDbContext<AppDbContext>(options =>
+                options.UseNpgsql(connectionString));
+
+            services.AddFluentMigrator(connectionString);
+        }
+        services.AddScoped<DbSeeder>();
+        services.AddRepositories();
+        services.AddScoped<IUserSyncService, UserSyncService>();
+        services.AddSingleton<IPasswordHasher, Sha256PasswordHasher>();
+
+        return services;
+    }
+}

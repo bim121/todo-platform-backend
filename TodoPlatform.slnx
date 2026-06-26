@@ -1,0 +1,9 @@
+<Solution>
+  <Project Path="src/TodoPlatform.Api/TodoPlatform.Api.csproj" />
+  <Project Path="src/TodoPlatform.Application/TodoPlatform.Application.csproj" />
+  <Project Path="src/TodoPlatform.Domain/TodoPlatform.Domain.csproj" />
+  <Project Path="src/TodoPlatform.Infrastructure/TodoPlatform.Infrastructure.csproj" />
+  <Project Path="tests/TodoPlatform.Api.Tests/TodoPlatform.Api.Tests.csproj" />
+  <Project Path="tests/TodoPlatform.Application.Tests/TodoPlatform.Application.Tests.csproj" />
+  <Project Path="tests/TodoPlatform.Infrastructure.Tests/TodoPlatform.Infrastructure.Tests.csproj" />
+</Solution>
