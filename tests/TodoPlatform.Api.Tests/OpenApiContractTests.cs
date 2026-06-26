@@ -9,6 +9,7 @@ public sealed class OpenApiContractTests(OpenApiWebApplicationFactory factory)
     private static readonly string[] ImplementedSwaggerPaths =
     [
         "/api/auth/login",
+        "/api/auth/me",
         "/api/auth/register",
         "/api/todos",
         "/api/todos/{id}",

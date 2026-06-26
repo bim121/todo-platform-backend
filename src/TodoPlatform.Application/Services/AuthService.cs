@@ -6,19 +6,6 @@ namespace TodoPlatform.Application.Services;
 
 public sealed class AuthService(IUserRepository users, IPasswordHasher passwordHasher) : IAuthService
 {
-    public async Task<AuthResponse?> LoginAsync(
-        LoginRequest request,
-        CancellationToken cancellationToken = default)
-    {
-        var email = NormalizeEmail(request.Email);
-        var user = await users.GetByEmailAsync(email, cancellationToken);
-
-        if (user is null || !passwordHasher.Verify(request.Password, user.PasswordHash))
-            return null;
-
-        return AuthResponse.FromUser(user, CreateMockToken(user.Id));
-    }
-
     public async Task<UserDto> RegisterAsync(
         RegisterRequest request,
         CancellationToken cancellationToken = default)
@@ -35,7 +22,4 @@ public sealed class AuthService(IUserRepository users, IPasswordHasher passwordH
 
     private static string NormalizeEmail(string email) =>
         email.Trim().ToLowerInvariant();
-
-    private static string CreateMockToken(Guid userId) =>
-        $"mockToken={userId}-{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}";
 }

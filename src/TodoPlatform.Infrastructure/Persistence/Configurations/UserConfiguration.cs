@@ -26,5 +26,12 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(u => u.Name)
             .HasMaxLength(200)
             .IsRequired();
+
+        builder.Property(u => u.KeycloakSub)
+            .HasMaxLength(64);
+
+        builder.HasIndex(u => u.KeycloakSub)
+            .IsUnique()
+            .HasFilter("\"KeycloakSub\" IS NOT NULL");
     }
 }

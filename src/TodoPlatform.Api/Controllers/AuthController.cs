@@ -7,41 +7,60 @@ using TodoPlatform.Application.Services;
 namespace TodoPlatform.Api.Controllers;
 
 /// <summary>
-/// Temporary mock authentication (replaced by Keycloak in B-05).
+/// Auth endpoints. Login is handled by Keycloak (B-05); register remains for legacy/dev until Phase 17.
 /// </summary>
 [ApiController]
 [Route("api/auth")]
-[AllowAnonymous]
 [Produces("application/json")]
-public class AuthController(IAuthService authService) : ControllerBase
+public class AuthController(
+    IAuthService authService,
+    ICurrentUserService currentUser,
+    IConfiguration configuration) : ControllerBase
 {
     /// <summary>
-    /// Login with email and password. Returns mock JWT token until B-05.
+    /// Deprecated mock login. Use Keycloak token endpoint instead.
     /// </summary>
-    /// <param name="request">Credentials.</param>
-    /// <param name="cancellationToken">Request cancellation token.</param>
     [HttpPost("login")]
+    [AllowAnonymous]
     [DeprecatedEndpoint("Sat, 01 Jun 2027 00:00:00 GMT")]
-    [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
-    public async Task<ActionResult<AuthResponse>> Login(
-        [FromBody] LoginRequest request,
-        CancellationToken cancellationToken)
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status410Gone)]
+    public ActionResult Login()
     {
-        if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
-            return BadRequest(new { error = "Email and password are required." });
+        var authority = configuration["Keycloak:Authority"] ?? "http://localhost:8080/realms/todo-platform";
+        var tokenEndpoint = $"{authority.TrimEnd('/')}/protocol/openid-connect/token";
 
-        var response = await authService.LoginAsync(request, cancellationToken);
-        return response is null ? Unauthorized() : Ok(response);
+        return Problem(
+            statusCode: StatusCodes.Status410Gone,
+            title: "Login endpoint removed",
+            detail: $"Authenticate via Keycloak. Obtain a token from POST {tokenEndpoint} and send Authorization: Bearer <access_token> to the API.",
+            type: "https://httpstatuses.com/410");
     }
 
     /// <summary>
-    /// Register a new user.
+    /// Returns the authenticated user profile from the Bearer token (BFF-style).
     /// </summary>
-    /// <param name="request">Registration payload.</param>
-    /// <param name="cancellationToken">Request cancellation token.</param>
+    [HttpGet("me")]
+    [Authorize]
+    [ProducesResponseType(typeof(MeDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    public ActionResult<MeDto> Me()
+    {
+        if (!currentUser.IsAuthenticated || currentUser.UserId == Guid.Empty)
+        {
+            return Problem(
+                statusCode: StatusCodes.Status401Unauthorized,
+                title: "Unauthorized",
+                detail: "A valid Bearer token is required.");
+        }
+
+        return Ok(MeDto.FromCurrentUser(currentUser));
+    }
+
+    /// <summary>
+    /// Register a new user (legacy local account; prefer Keycloak in production).
+    /// </summary>
     [HttpPost("register")]
+    [AllowAnonymous]
     [ProducesResponseType(typeof(UserDto), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<UserDto>> Register(
@@ -60,7 +79,7 @@ public class AuthController(IAuthService authService) : ControllerBase
         try
         {
             var user = await authService.RegisterAsync(request, cancellationToken);
-            return CreatedAtAction(nameof(Register), new { id = user.Id }, user);
+            return CreatedAtAction(nameof(Me), user);
         }
         catch (InvalidOperationException ex)
         {

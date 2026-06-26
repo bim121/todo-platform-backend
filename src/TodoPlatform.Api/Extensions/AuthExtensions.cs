@@ -68,8 +68,8 @@ public static class AuthExtensions
         return services;
     }
 
-    public static IApplicationBuilder UseCurrentUserEnrichment(this IApplicationBuilder app) =>
-        app.UseMiddleware<CurrentUserEnrichmentMiddleware>();
+    public static IApplicationBuilder UseCurrentUserSync(this IApplicationBuilder app) =>
+        app.UseMiddleware<CurrentUserSyncMiddleware>();
 
     private static async Task WriteAuthProblemDetailsAsync(JwtBearerChallengeContext context)
     {
@@ -127,6 +127,8 @@ public sealed class TestAuthHandler(
     public const string TestToken = "test";
     public const string UserEmailHeader = "X-Test-User-Email";
     public const string UserRolesHeader = "X-Test-User-Roles";
+    public const string UserSubHeader = "X-Test-User-Sub";
+    public const string DefaultTestSub = "11111111-1111-1111-1111-111111111111";
 
     protected override Task<AuthenticateResult> HandleAuthenticateAsync()
     {
@@ -139,6 +141,7 @@ public sealed class TestAuthHandler(
             return Task.FromResult(AuthenticateResult.Fail("Invalid test bearer token."));
 
         var email = Request.Headers[UserEmailHeader].FirstOrDefault() ?? DbSeeder.TestEmail;
+        var sub = Request.Headers[UserSubHeader].FirstOrDefault() ?? DefaultTestSub;
         var roles = Request.Headers[UserRolesHeader].FirstOrDefault()?.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
             ?? ["user"];
 
@@ -147,7 +150,9 @@ public sealed class TestAuthHandler(
             new(ClaimTypes.Email, email),
             new("email", email),
             new("preferred_username", email),
-            new("sub", Guid.NewGuid().ToString()),
+            new("sub", sub),
+            new(ClaimTypes.Name, "Test User"),
+            new("name", "Test User"),
         };
 
         claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));

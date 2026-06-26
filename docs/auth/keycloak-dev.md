@@ -103,12 +103,50 @@ curl -X POST "http://localhost:8080/realms/todo-platform/protocol/openid-connect
   -d "password=password123"
 ```
 
-### Вызов API (после B-05.4)
+### Вызов API (B-05.4+)
 
 ```bash
-curl http://localhost:5000/api/todos?userId=<guid> \
+# Список todos текущего пользователя (userId опционален — берётся из токена)
+curl http://localhost:5000/api/todos \
   -H "Authorization: Bearer <access_token>"
+
+# Профиль текущего пользователя (BFF)
+curl http://localhost:5000/api/auth/me \
+  -H "Authorization: Bearer <access_token>"
+
+# Admin endpoint — только роль admin
+curl http://localhost:5000/api/admin/tenants \
+  -H "Authorization: Bearer <admin_access_token>"
 ```
+
+### Полный dev-сценарий (copy-paste)
+
+```bash
+# 1. Keycloak access token (test user)
+TOKEN=$(curl -s -X POST "http://localhost:8080/realms/todo-platform/protocol/openid-connect/token" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "client_id=todo-spa" \
+  -d "grant_type=password" \
+  -d "username=test@example.com" \
+  -d "password=password123" | jq -r .access_token)
+
+# 2. Профиль (первый запрос линкует Keycloak sub к seed-пользователю в БД)
+curl -s http://localhost:5000/api/auth/me -H "Authorization: Bearer $TOKEN" | jq
+
+# 3. Todos
+curl -s http://localhost:5000/api/todos -H "Authorization: Bearer $TOKEN" | jq
+
+# 4. Без токена → 401 ProblemDetails
+curl -i http://localhost:5000/api/todos
+
+# 5. User token на admin → 403
+curl -i http://localhost:5000/api/admin/tenants -H "Authorization: Bearer $TOKEN"
+```
+
+### Mock login удалён (B-05.7)
+
+`POST /api/auth/login` возвращает **410 Gone** с `Deprecation`/`Sunset` headers.
+Используй Keycloak token endpoint выше.
 
 ---
 

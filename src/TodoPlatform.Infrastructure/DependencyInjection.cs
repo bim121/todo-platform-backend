@@ -2,9 +2,11 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using TodoPlatform.Application.Interfaces;
+using TodoPlatform.Application.Services;
 using TodoPlatform.Infrastructure.Migrations;
 using TodoPlatform.Infrastructure.Persistence;
 using TodoPlatform.Infrastructure.Repositories;
+using TodoPlatform.Infrastructure.Security;
 using TodoPlatform.Infrastructure.Security;
 
 namespace TodoPlatform.Infrastructure;
@@ -35,6 +37,7 @@ public static class DependencyInjection
         }
         services.AddScoped<DbSeeder>();
         services.AddRepositories();
+        services.AddScoped<IUserSyncService, UserSyncService>();
         services.AddSingleton<IPasswordHasher, Sha256PasswordHasher>();
 
         return services;

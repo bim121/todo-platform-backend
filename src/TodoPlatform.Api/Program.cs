@@ -59,7 +59,7 @@ if (app.Environment.IsDevelopment())
 app.UseRouting();
 app.UseCors("Frontend");
 app.UseAuthentication();
-app.UseCurrentUserEnrichment();
+app.UseCurrentUserSync();
 app.UseMiddleware<AuthorizationProblemDetailsMiddleware>();
 app.UseAuthorization();
 app.UseApiVersioning();

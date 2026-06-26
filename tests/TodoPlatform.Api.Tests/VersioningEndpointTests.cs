@@ -51,7 +51,7 @@ public sealed class VersioningEndpointTests : IClassFixture<TodoPlatformWebAppli
     }
 
     [Fact]
-    public async Task Login_ReturnsDeprecationAndSunsetHeaders()
+    public async Task Login_ReturnsGoneWithDeprecationHeaders()
     {
         await _factory.EnsureDatabaseSeededAsync();
         var client = _factory.CreateClient();
@@ -60,7 +60,7 @@ public sealed class VersioningEndpointTests : IClassFixture<TodoPlatformWebAppli
             "/api/auth/login",
             new { email = DbSeeder.TestEmail, password = DbSeeder.TestPassword });
 
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal(HttpStatusCode.Gone, response.StatusCode);
         Assert.True(response.Headers.TryGetValues("Deprecation", out var deprecation));
         Assert.Contains("true", deprecation);
         Assert.True(response.Headers.TryGetValues("Sunset", out var sunset));
