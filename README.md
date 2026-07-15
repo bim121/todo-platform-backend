@@ -1,62 +1,73 @@
-# Todo Platform Backend (ASP.NET Core)
+# Todo Platform Backend — ASP.NET Core
 
-Отдельный backend-проект для todo-платформы. Разрабатывается **независимо** от Angular-фронта в [`../anular-ngrx-todo-auth`](../anular-ngrx-todo-auth).
+Enterprise-grade todo platform backend built with Clean Architecture, CQRS (MediatR), PostgreSQL, Keycloak, and comprehensive test coverage.
 
-## Быстрый старт
+## Tech Stack
+
+- .NET / ASP.NET Core Web API
+- Clean Architecture (Api → Application → Domain → Infrastructure)
+- Entity Framework Core + PostgreSQL
+- Keycloak (IAM)
+- MediatR, Specification pattern, Outbox
+- Serilog, Swagger, Health checks
+- xUnit integration & unit tests
+
+## Quick Start
+
+### With Docker (PostgreSQL + Keycloak)
 
 ```bash
+git clone https://github.com/bim121/todo-platform-backend.git
 cd todo-platform-backend
+docker compose up -d
 dotnet build TodoPlatform.slnx
 dotnet test TodoPlatform.slnx
 dotnet run --project src/TodoPlatform.Api
 ```
 
-| URL | Описание |
-|-----|----------|
+| URL | Description |
+|-----|-------------|
 | http://localhost:5000/swagger | Swagger UI |
 | http://localhost:5000/health | Health check |
-| http://localhost:5000/api/health | JSON health info |
-| [`docs/pact-provider.md`](./docs/pact-provider.md) | Pact provider URL for frontend Phase 11 |
+| http://localhost:8080 | Keycloak admin (admin/admin) |
 
-**Текущий этап:** B-00 выполнен (scaffold). Следующий: [B-01 CRUD + PostgreSQL](./plans/backend-phase-01-clean-api.md).
+### Without Docker
 
-## Workspace
-
-```
-d:\programing\ngrx\
-├── anular-ngrx-todo-auth\     # Angular + NgRx
-├── todo-platform-backend\      # ← ASP.NET Core (.NET)
-├── todo-platform-java\         # Spring Boot (Java) — parity track
-└── contracts\openapi.yaml
+```bash
+dotnet build TodoPlatform.slnx
+dotnet test TodoPlatform.slnx
+dotnet run --project src/TodoPlatform.Api
 ```
 
-## Стек
-
-- **.NET 10**, ASP.NET Core Web API
-- Clean Architecture: Api / Application / Domain / Infrastructure
-- Serilog, Swagger, Health checks
-- (далее) MediatR, EF Core, PostgreSQL, Keycloak, Redis, Kafka…
-
-## Roadmap
-
-| Документ | Описание |
-|----------|----------|
-| [plans/README.md](./plans/README.md) | Все фазы B-00 … **B-33** |
-| [plans/backend-phase-00-foundation.md](./plans/backend-phase-00-foundation.md) | Текущая/завершённая фаза |
-| [plans/guides/](./plans/guides/) | Теория (B-00 full) |
-| [plans/integration-sync.md](./plans/integration-sync.md) | Когда подключать фронт |
-
-## Структура кода
+## Project Structure
 
 ```
 src/
-├── TodoPlatform.Api/              # Program.cs, Controllers
-├── TodoPlatform.Application/      # Use cases (MediatR в B-03)
-├── TodoPlatform.Domain/           # Entities
-└── TodoPlatform.Infrastructure/   # EF, Redis, external
-tests/TodoPlatform.Api.Tests/
+├── TodoPlatform.Api/              # Endpoints, middleware, auth
+├── TodoPlatform.Application/      # Commands, queries, validators (MediatR)
+├── TodoPlatform.Domain/           # Entities, domain events
+└── TodoPlatform.Infrastructure/   # EF Core, repositories, Keycloak, outbox
+tests/
+├── TodoPlatform.Api.Tests/        # Integration tests (WebApplicationFactory)
+├── TodoPlatform.Application.Tests/
+└── TodoPlatform.Infrastructure.Tests/
 ```
 
-## Связь с фронтом
+## Highlights
 
-Фронт на json-server до Phase 13. Матрица: [`../anular-ngrx-todo-auth/plans/integration-map.md`](../anular-ngrx-todo-auth/plans/integration-map.md)
+- **Clean Architecture** with clear layer boundaries and dependency inversion
+- **Specification pattern** for composable EF Core queries
+- **Domain events + outbox** for reliable async processing
+- **API versioning** and OpenAPI contract tests
+- **Auth integration** with Keycloak
+- **ADR documentation** in `docs/adr/`
+
+## Documentation
+
+- [Architecture Decision Records](./docs/adr/)
+- [Development phases](./plans/README.md)
+
+## Author
+
+**Vitaliy Tyshyk** — Full-Stack Engineer | Angular, .NET, NestJS  
+[LinkedIn](https://www.linkedin.com/in/vitaliy-t-2928313b9/) · [GitHub](https://github.com/bim121)
