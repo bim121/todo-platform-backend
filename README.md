@@ -41,7 +41,9 @@ d:\programing\ngrx\
 
 | Документ | Описание |
 |----------|----------|
-| [plans/README.md](./plans/README.md) | Все фазы B-00 … **B-33** |
+| [plans/README.md](./plans/README.md) | Все фазы B-00 … **B-38** |
+| [plans/aws-cert-track.md](./plans/aws-cert-track.md) | SAA / DVA / DOP / MLA |
+| [plans/backend-phase-24-observability.md](./plans/backend-phase-24-observability.md) | Grafana+Loki+Prometheus+Promtail |
 | [plans/backend-phase-00-foundation.md](./plans/backend-phase-00-foundation.md) | Текущая/завершённая фаза |
 | [plans/guides/](./plans/guides/) | Теория (B-00 full) |
 | [plans/integration-sync.md](./plans/integration-sync.md) | Когда подключать фронт |

@@ -24,8 +24,12 @@ Backend разрабатывается **независимо**. Frontend под
 | 16 | Phase 15 + Admin v2 | B-28 | Blue/green UI |
 | 17 | Phase 18 AI | B-29 | Semantic search |
 | 18+ | Phase 16 CDN | B-20 → B-31, **B-33** | Full stack deploy |
+| 20+ | Phase 19–20 RAG/Agents | **B-36–37** | `ai.rag` / `ai.agent` |
+| 22+ | Phase 21 FE AWS | **B-34–35, B-38** | CloudFront + cert labs |
 
-**Java track:** те же фазы J-00…J-33 — [integration-sync.md](../../todo-platform-java/plans/integration-sync.md).
+**Java track:** те же фазы J-00…J-38 — [integration-sync.md](../../todo-platform-java/plans/integration-sync.md).  
+**AWS certs:** [aws-cert-track.md](./aws-cert-track.md).  
+**Observability:** [B-24](./backend-phase-24-observability.md) — Grafana + Loki + Prometheus + Promtail.
 
 ---
 
@@ -42,6 +46,10 @@ Backend разрабатывается **независимо**. Frontend под
 | B-15 | Phase 13 `useBackendSearch` |
 | B-14 | Attachments feature flag |
 | B-29 | Phase 18 AI endpoints |
+| B-36 | Phase 19 RAG (`ai.rag.enabled`) |
+| B-37 | Phase 20 Agents (`ai.agent.enabled`) |
+| B-24 | Phase 12/21 Grafana link |
+| B-34 | Phase 21 CloudFront |
 | B-10 GraphQL | **Phase 13-GraphQL** (`useGraphQL`); Kanban one-query |
 | B-17 gRPC | Phase 13-GraphQL (architecture doc); internal only |
 

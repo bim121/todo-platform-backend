@@ -23,11 +23,15 @@
 | IaC | Terraform (Azure primary) | B-25 |
 | Orchestration | Kubernetes (AKS), Helm | B-26 |
 | Config mgmt | Ansible | B-27 |
-| Observability | OpenTelemetry, Prometheus, Grafana, Loki | B-24 |
+| Observability | OpenTelemetry, **Prometheus, Grafana, Loki, Promtail**, Tempo | **B-24** |
 | Load test | k6, BenchmarkDotNet | B-22 |
 | Contract | OpenAPI 3.1 in `../../contracts/` | B-02 |
 | **GraphQL** | Hot Chocolate | **B-10** |
+| **gRPC** | Grpc.AspNetCore, protobuf | **B-17** |
 | **Concurrency** | IAsyncEnumerable, Channels, Parallel.ForEachAsync | **B-33** |
+| **AWS** | VPC, ECS/EKS, RDS, S3, IAM, CloudWatch | **B-34, B-35** |
+| **RAG / Agents / MCP** | Hybrid retrieve, LLM tools, MCP server | **B-36, B-37** |
+| **Bedrock / MLA** | Amazon Bedrock, Guardrails, batch embed | **B-38** |
 
 ## Azure-first (Microsoft interviews)
 
@@ -35,6 +39,11 @@
 - Azure Cache for Redis, Azure Blob, Key Vault
 - Entra ID integration path (alternative to Keycloak in prod)
 
-## AWS/GCP equivalents (Google/Amazon interviews)
+## AWS (Amazon interviews + certs)
 
-Document in ADRs when comparing: RDS/Cloud SQL, EKS/GKE, ElastiCache/Memorystore, S3/GCS.
+- Practice track: [aws-cert-track.md](./aws-cert-track.md) — SAA, DVA, DOP, MLA
+- EKS/ECS, RDS, ElastiCache, S3, Bedrock — B-34…B-38
+
+## GCP equivalents (Google interviews)
+
+Document in ADRs when comparing: Cloud SQL, GKE, Memorystore, GCS, Vertex AI.

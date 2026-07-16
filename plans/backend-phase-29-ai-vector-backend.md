@@ -146,4 +146,5 @@ Parallel skills: Design search engine — [parallel-skills-backend.md](./paralle
 
 ## Следующая фаза
 
-→ [B-30 Security Hardening (OWASP)](./backend-phase-30-security-hardening.md)
+→ [B-30 Security Hardening (OWASP)](./backend-phase-30-security-hardening.md)  
+Позже AI depth: [B-36 RAG](./backend-phase-36-rag-llm.md) → [B-37 Agents/MCP](./backend-phase-37-ai-agents-mcp.md) → [B-38 MLA](./backend-phase-38-aws-ml-engineer.md)

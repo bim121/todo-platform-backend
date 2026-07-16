@@ -151,5 +151,5 @@ Compare: sequential import, Parallel.ForEachAsync (DOP 2/4/8), Channel pipeline.
 
 ## Следующая фаза
 
-Roadmap complete. Portfolio: [B-31 System Design Capstone](./backend-phase-31-system-design-capstone.md).  
-Опционально: повторить capstone с concurrency deep dive в doc 07.
+→ [B-34 AWS Foundations (SAA + DVA)](./backend-phase-34-aws-foundations.md)  
+Portfolio: [B-31 System Design Capstone](./backend-phase-31-system-design-capstone.md) — обновить после B-36…B-38.

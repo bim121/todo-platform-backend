@@ -61,6 +61,10 @@
 | B-31 | [b-31-system-design-capstone-theory.md](./b-31-system-design-capstone-theory.md) | placeholder |
 | **B-32** | [b-32-graphql-grpc-theory.md](./b-32-graphql-grpc-theory.md) | index → B-10 + B-17 |
 | **B-33** | [b-33-concurrency-parallelism-theory.md](./b-33-concurrency-parallelism-theory.md) | placeholder |
+| **B-24** | [b-24-observability-theory.md](./b-24-observability-theory.md) | LGTM + Promtail |
+| **B-34+** | see phase files | AWS / RAG / Agents / MLA |
+| **B-36** | [b-36-rag-llm-theory.md](./b-36-rag-llm-theory.md) | placeholder |
+| **B-37** | [b-37-ai-agents-mcp-theory.md](./b-37-ai-agents-mcp-theory.md) | placeholder |
 
 ---
 

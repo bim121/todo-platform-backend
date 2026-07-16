@@ -36,7 +36,7 @@
 | B-21 | [backend-phase-21-sharding-partitioning.md](./backend-phase-21-sharding-partitioning.md) | **DB scaling II** |
 | B-22 | [backend-phase-22-performance-load.md](./backend-phase-22-performance-load.md) | **DB performance III** |
 | B-23 | [backend-phase-23-nginx-gateway.md](./backend-phase-23-nginx-gateway.md) | nginx + TLS |
-| B-24 | [backend-phase-24-observability.md](./backend-phase-24-observability.md) | Prometheus, Grafana, OTel |
+| B-24 | [backend-phase-24-observability.md](./backend-phase-24-observability.md) | **Grafana + Loki + Prometheus + Promtail** + OTel |
 | B-25 | [backend-phase-25-terraform-azure.md](./backend-phase-25-terraform-azure.md) | **Terraform Azure** |
 | B-26 | [backend-phase-26-kubernetes-aks.md](./backend-phase-26-kubernetes-aks.md) | **Kubernetes AKS** |
 | B-27 | [backend-phase-27-ansible-automation.md](./backend-phase-27-ansible-automation.md) | Ansible |
@@ -46,8 +46,13 @@
 | B-31 | [backend-phase-31-system-design-capstone.md](./backend-phase-31-system-design-capstone.md) | System design capstone |
 | ~~B-32~~ | [backend-phase-32-graphql-grpc.md](./backend-phase-32-graphql-grpc.md) | **→ перенесена** в B-10 + B-17 |
 | **B-33** | [backend-phase-33-concurrency-parallelism.md](./backend-phase-33-concurrency-parallelism.md) | **Concurrency & Channels** |
+| **B-34** | [backend-phase-34-aws-foundations.md](./backend-phase-34-aws-foundations.md) | **AWS SAA + DVA** |
+| **B-35** | [backend-phase-35-aws-devops-pro.md](./backend-phase-35-aws-devops-pro.md) | **AWS DevOps Pro** |
+| **B-36** | [backend-phase-36-rag-llm.md](./backend-phase-36-rag-llm.md) | **RAG & LLM** |
+| **B-37** | [backend-phase-37-ai-agents-mcp.md](./backend-phase-37-ai-agents-mcp.md) | **AI Agents & MCP** |
+| **B-38** | [backend-phase-38-aws-ml-engineer.md](./backend-phase-38-aws-ml-engineer.md) | **AWS ML Eng Associate** |
 
-> **GraphQL** — [B-10](./backend-phase-10-complex-sql-readmodels.md) (после read models). **gRPC** — [B-17](./backend-phase-17-microservices-split.md) (в момент split). **Concurrency** — [B-33](./backend-phase-33-concurrency-parallelism.md). B-32 — redirect для старых ссылок.
+> **GraphQL** — [B-10](./backend-phase-10-complex-sql-readmodels.md). **gRPC** — [B-17](./backend-phase-17-microservices-split.md). **Observability LGTM** — [B-24](./backend-phase-24-observability.md) (не сдвигать). **AWS certs** — [aws-cert-track.md](./aws-cert-track.md). **AI path:** B-29 → B-36 → B-37 → B-38.
 
 ---
 
@@ -91,4 +96,5 @@ Modular Monolith (B-00…B-16)
 ## Параллельный трек
 
 - [parallel-skills-backend.md](./parallel-skills-backend.md) — system design, algorithms for backend
+- [aws-cert-track.md](./aws-cert-track.md) — SAA / DVA / DOP / MLA → фазы
 - [tech-stack.md](./tech-stack.md) — версии пакетов и сервисов

@@ -1,55 +1,28 @@
-﻿# B-24 — Observability (теория)
+﻿# B-24 — Observability Theory (LGTM + Promtail)
 
-> **Статус:** placeholder — наполняется по запросу.  
 > **Практика:** [../backend-phase-24-observability.md](../backend-phase-24-observability.md)
 
----
+## 1. Зачем
 
-## 1. Зачем эта тема
+Три столпа: metrics, logs, traces. Без correlation on-call невозможен.
 
-<!-- Контекст FAANG / Microsoft L63+ -->
+## 2. Стек
 
-## 2. Базовые концепции
+| Component | Role |
+|-----------|------|
+| Prometheus | metrics TSDB + alerts |
+| Grafana | UI |
+| Loki | log TSDB |
+| Promtail | log shipper (Docker/K8s) |
+| Tempo / Jaeger | traces |
+| OTel Collector | vendor-neutral pipeline |
 
-<!-- Определения -->
+## 3. Почему Promtail
 
-## 3. Глубокое погружение
+K8s/Docker-идиома: app пишет stdout JSON → agent собирает. Не хардкодить Loki sink в каждый сервис (хотя Serilog sink допустим для spike).
 
-<!-- Как работает под капотом -->
+## 4. Interview
 
-## 4. Примеры кода (C#)
-
-\\\csharp
-// TODO: примеры для Observability
-\\\
-
-## 5. Плюсы / минусы / когда НЕ использовать
-
-| Плюсы | Минусы |
-|-------|--------|
-| | |
-
-## 6. Сравнение с альтернативами
-
-| Подход | Популярность | Когда выбрать |
-|--------|--------------|---------------|
-| | | |
-
-## 7. Типичные ошибки
-
-- 
-
-## 8. Вопросы на интервью
-
-1. 
-
-## 9. Связь с другими фазами
-
-- Предшествует: B-23
-- Следует: B-25
-
-## 10. Ресурсы
-
-- [Microsoft Learn](https://learn.microsoft.com/dotnet/)
-- 
-
+- RED vs USE metrics
+- Cardinality pitfalls
+- Log↔trace correlation via `trace_id`
