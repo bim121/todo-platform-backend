@@ -10,9 +10,9 @@
 
 ## Результат фазы
 
-- [ ] Redis 7 в `docker-compose.yml` (port 6379)
-- [ ] `IDistributedCache` + `StackExchange.Redis` configuration
-- [ ] `ICacheService` wrapper — GetOrSet, RemoveByPrefix, JSON serialization
+- [x] Redis 7 в `docker-compose.yml` (port 6379)
+- [x] `IDistributedCache` + `StackExchange.Redis` configuration
+- [x] `ICacheService` wrapper — GetOrSet, RemoveByPrefix, JSON serialization
 - [ ] `GetTodosQuery` — cache key `todos:user:{userId}` TTL 5 min
 - [ ] `GetTodoByIdQuery` — cache key `todo:{id}` TTL 10 min
 - [ ] `TodoCreatedCacheInvalidator` / `TodoDeletedCacheInvalidator` handlers (из B-04)
