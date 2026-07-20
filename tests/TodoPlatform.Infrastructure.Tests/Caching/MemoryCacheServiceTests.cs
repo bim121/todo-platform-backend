@@ -12,7 +12,8 @@ public sealed class MemoryCacheServiceTests
     [Fact]
     public async Task GetOrSetAsync_SecondCall_IsCacheHit()
     {
-        var sut = CreateSut();
+        var metrics = new CacheMetrics();
+        var sut = CreateSut(metrics);
         var factoryCalls = 0;
         var key = CacheKeys.TodosByUser(Guid.NewGuid());
 
@@ -36,6 +37,8 @@ public sealed class MemoryCacheServiceTests
 
         Assert.Equal(first, second);
         Assert.Equal(1, factoryCalls);
+        Assert.Equal(1, metrics.Misses);
+        Assert.Equal(1, metrics.Hits);
     }
 
     [Fact]
@@ -49,7 +52,7 @@ public sealed class MemoryCacheServiceTests
         await sut.GetOrSetAsync(listKey, _ => Task.FromResult("list"), TimeSpan.FromMinutes(1));
         await sut.GetOrSetAsync(todoKey, _ => Task.FromResult("todo"), TimeSpan.FromMinutes(1));
 
-        await sut.RemoveByPrefixAsync("todos:user:");
+        await sut.RemoveByPrefixAsync(CacheKeys.TodosByUserPrefix(userId));
 
         var factoryCalls = 0;
         await sut.GetOrSetAsync(
@@ -75,10 +78,28 @@ public sealed class MemoryCacheServiceTests
         Assert.Equal(0, factoryCalls);
     }
 
-    private static MemoryCacheService CreateSut()
+    [Fact]
+    public async Task GetOrSetAsync_EmptyCollection_UsesShortTtlPath()
+    {
+        var sut = CreateSut();
+        var key = CacheKeys.TodosByUser(Guid.NewGuid());
+
+        var result = await sut.GetOrSetAsync(
+            key,
+            _ => Task.FromResult((IReadOnlyList<string>)Array.Empty<string>()),
+            TimeSpan.FromMinutes(5),
+            emptyCollectionTtl: TimeSpan.FromSeconds(30));
+
+        Assert.Empty(result);
+    }
+
+    private static MemoryCacheService CreateSut(CacheMetrics? metrics = null)
     {
         var opts = Options.Create(new MemoryDistributedCacheOptions());
         IDistributedCache cache = new MemoryDistributedCache(opts);
-        return new MemoryCacheService(cache, NullLogger<MemoryCacheService>.Instance);
+        return new MemoryCacheService(
+            cache,
+            metrics ?? new CacheMetrics(),
+            NullLogger<MemoryCacheService>.Instance);
     }
 }

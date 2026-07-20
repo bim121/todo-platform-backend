@@ -1,4 +1,5 @@
 using MediatR;
+using TodoPlatform.Application.Caching;
 using TodoPlatform.Application.Dtos;
 using TodoPlatform.Application.Exceptions;
 using TodoPlatform.Application.Interfaces;
@@ -15,7 +16,8 @@ public sealed record GetTodosQuery(
 
 public sealed class GetTodosQueryHandler(
     ITodoRepository repository,
-    ICurrentUserService currentUser)
+    ICurrentUserService currentUser,
+    ICacheService cache)
     : IRequestHandler<GetTodosQuery, IReadOnlyList<TodoDto>>
 {
     public async Task<IReadOnlyList<TodoDto>> Handle(
@@ -33,13 +35,27 @@ public sealed class GetTodosQueryHandler(
                 });
         }
 
-        var specification = TodoListSpecification.Create(
+        var cacheKey = CacheKeys.TodosByUser(
             userId,
             request.ActiveOnly,
             request.Skip,
             request.Take);
 
-        var todos = await repository.ListAsync(specification, cancellationToken);
-        return todos.Select(TodoDto.FromEntity).ToList();
+        return await cache.GetOrSetAsync(
+            cacheKey,
+            async ct =>
+            {
+                var specification = TodoListSpecification.Create(
+                    userId,
+                    request.ActiveOnly,
+                    request.Skip,
+                    request.Take);
+
+                var todos = await repository.ListAsync(specification, ct);
+                return (IReadOnlyList<TodoDto>)todos.Select(TodoDto.FromEntity).ToList();
+            },
+            CacheTtl.TodosList,
+            cancellationToken,
+            emptyCollectionTtl: CacheTtl.TodosListEmpty);
     }
 }

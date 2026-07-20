@@ -44,6 +44,7 @@ public static class DependencyInjection
         services.AddRepositories();
         services.AddScoped<IUserSyncService, UserSyncService>();
         services.AddSingleton<IPasswordHasher, Sha256PasswordHasher>();
+        services.AddSingleton<CacheMetrics>();
         services.AddCaching(configuration);
 
         return services;

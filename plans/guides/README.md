@@ -33,7 +33,7 @@
 | B-03 | [b-03-cqrs-mediatr-theory.md](./b-03-cqrs-mediatr-theory.md) | placeholder |
 | B-04 | [b-04-domain-events-theory.md](./b-04-domain-events-theory.md) | **full** |
 | B-05 | [b-05-keycloak-auth-theory.md](./b-05-keycloak-auth-theory.md) | placeholder |
-| B-06 | [b-06-redis-caching-theory.md](./b-06-redis-caching-theory.md) | placeholder |
+| B-06 | [b-06-redis-caching-theory.md](./b-06-redis-caching-theory.md) | **full** |
 | B-07 | [b-07-rabbitmq-basics-theory.md](./b-07-rabbitmq-basics-theory.md) | placeholder |
 | B-08 | [b-08-docker-compose-theory.md](./b-08-docker-compose-theory.md) | placeholder |
 | B-09 | [b-09-postgres-queries-theory.md](./b-09-postgres-queries-theory.md) | placeholder |

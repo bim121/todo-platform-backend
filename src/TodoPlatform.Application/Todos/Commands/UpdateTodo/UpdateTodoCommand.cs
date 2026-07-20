@@ -1,4 +1,5 @@
 using MediatR;
+using TodoPlatform.Application.Caching;
 using TodoPlatform.Application.Common;
 using TodoPlatform.Application.Dtos;
 using TodoPlatform.Application.Exceptions;
@@ -8,7 +9,9 @@ namespace TodoPlatform.Application.Todos.Commands.UpdateTodo;
 
 public sealed record UpdateTodoCommand(Guid Id, UpdateTodoRequest Body) : IRequest<TodoDto>, ICommand;
 
-public sealed class UpdateTodoHandler(ITodoRepository repository)
+public sealed class UpdateTodoHandler(
+    ITodoRepository repository,
+    ICacheService cache)
     : IRequestHandler<UpdateTodoCommand, TodoDto>
 {
     public async Task<TodoDto> Handle(UpdateTodoCommand request, CancellationToken cancellationToken)
@@ -21,6 +24,14 @@ public sealed class UpdateTodoHandler(ITodoRepository repository)
         {
             request.Body.ApplyTo(todo);
             await repository.UpdateAsync(todo, cancellationToken);
+
+            // Title/status updates may not raise domain events — invalidate explicitly.
+            // TodoCompletedEvent also invalidates when Complete() runs (double-remove is fine).
+            await cache.RemoveAsync(CacheKeys.TodoById(todo.Id), cancellationToken);
+            await cache.RemoveByPrefixAsync(
+                CacheKeys.TodosByUserPrefix(todo.UserId),
+                cancellationToken);
+
             return TodoDto.FromEntity(todo);
         }
         catch (ArgumentException ex)

@@ -1,6 +1,7 @@
 using Moq;
 using TodoPlatform.Application.Interfaces;
 using TodoPlatform.Application.Services;
+using TodoPlatform.Application.Tests.Support;
 using TodoPlatform.Application.Todos.Queries.GetTodos;
 using TodoPlatform.Application.Todos.Specifications;
 using TodoPlatform.Domain.Entities;
@@ -29,13 +30,15 @@ public sealed class GetTodosQueryHandlerTests
         var currentUser = new Mock<ICurrentUserService>();
         currentUser.Setup(c => c.UserId).Returns(userId);
 
-        var handler = new GetTodosQueryHandler(repository.Object, currentUser.Object);
+        var cache = new PassThroughCacheService();
+        var handler = new GetTodosQueryHandler(repository.Object, currentUser.Object, cache);
         var result = await handler.Handle(new GetTodosQuery(userId), CancellationToken.None);
 
         Assert.Equal(2, result.Count);
         Assert.Equal("First", result[0].Title);
         Assert.Equal("low", result[0].Priority);
         Assert.Equal("in_progress", result[1].Status);
+        Assert.Equal(1, cache.GetOrSetCalls);
 
         repository.Verify(
             r => r.ListAsync(
@@ -59,7 +62,10 @@ public sealed class GetTodosQueryHandlerTests
         var currentUser = new Mock<ICurrentUserService>();
         currentUser.Setup(c => c.UserId).Returns(userId);
 
-        var handler = new GetTodosQueryHandler(repository.Object, currentUser.Object);
+        var handler = new GetTodosQueryHandler(
+            repository.Object,
+            currentUser.Object,
+            new PassThroughCacheService());
         await handler.Handle(new GetTodosQuery(userId, ActiveOnly: true), CancellationToken.None);
 
         Assert.NotNull(captured);
@@ -81,7 +87,10 @@ public sealed class GetTodosQueryHandlerTests
         var currentUser = new Mock<ICurrentUserService>();
         currentUser.Setup(c => c.UserId).Returns(userId);
 
-        var handler = new GetTodosQueryHandler(repository.Object, currentUser.Object);
+        var handler = new GetTodosQueryHandler(
+            repository.Object,
+            currentUser.Object,
+            new PassThroughCacheService());
         await handler.Handle(new GetTodosQuery(userId, Skip: 2, Take: 5), CancellationToken.None);
 
         Assert.NotNull(captured);

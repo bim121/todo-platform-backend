@@ -13,9 +13,9 @@
 - [x] Redis 7 в `docker-compose.yml` (port 6379)
 - [x] `IDistributedCache` + `StackExchange.Redis` configuration
 - [x] `ICacheService` wrapper — GetOrSet, RemoveByPrefix, JSON serialization
-- [ ] `GetTodosQuery` — cache key `todos:user:{userId}` TTL 5 min
-- [ ] `GetTodoByIdQuery` — cache key `todo:{id}` TTL 10 min
-- [ ] `TodoCreatedCacheInvalidator` / `TodoDeletedCacheInvalidator` handlers (из B-04)
+- [x] `GetTodosQuery` — cache key `todos:user:{userId}:…` TTL 5 min (empty 30s)
+- [x] `GetTodoByIdQuery` — cache key `todo:{id}` TTL 10 min
+- [x] `TodoCreated` / `TodoCompleted` / `TodoDeleted` cache invalidators (+ UpdateTodo)
 - [ ] Cache stampede protection — optional `SemaphoreSlim` per key
 - [ ] Health check `/health` includes Redis
 - [ ] Response header `X-Cache: HIT|MISS` (dev/debug)
@@ -74,9 +74,10 @@ redis:
 
 ### B-06.6 Observability prep
 
-1. Counter `cache_hits_total`, `cache_misses_total` (simple metrics class — full OTel B-24)
-2. Integration test: first call MISS, second HIT
-3. Document TTL strategy in `docs/adr/022-caching-strategy.md`
+1. [x] Counter `cache_hits_total`, `cache_misses_total` — `CacheMetrics` (OTel B-24)
+2. [x] Integration/unit: first call MISS, second HIT (`MemoryCacheServiceTests`)
+3. [x] Document TTL strategy — [docs/adr/022-caching-strategy.md](../docs/adr/022-caching-strategy.md)
+4. [x] Full theory — [guides/b-06-redis-caching-theory.md](./guides/b-06-redis-caching-theory.md)
 
 ---
 

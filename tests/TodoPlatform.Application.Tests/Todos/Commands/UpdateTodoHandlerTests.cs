@@ -1,7 +1,9 @@
 using Moq;
+using TodoPlatform.Application.Caching;
 using TodoPlatform.Application.Dtos;
 using TodoPlatform.Application.Exceptions;
 using TodoPlatform.Application.Interfaces;
+using TodoPlatform.Application.Tests.Support;
 using TodoPlatform.Application.Todos.Commands.UpdateTodo;
 using TodoPlatform.Domain.Entities;
 
@@ -10,7 +12,7 @@ namespace TodoPlatform.Application.Tests.Todos.Commands;
 public sealed class UpdateTodoHandlerTests
 {
     [Fact]
-    public async Task Handle_ExistingTodo_UpdatesAndReturnsDto()
+    public async Task Handle_ExistingTodo_UpdatesAndInvalidatesCache()
     {
         var todo = Todo.Create("Old title", Guid.NewGuid());
         Todo? updated = null;
@@ -24,7 +26,8 @@ public sealed class UpdateTodoHandlerTests
             .Callback<Todo, CancellationToken>((entity, _) => updated = entity)
             .Returns(Task.CompletedTask);
 
-        var handler = new UpdateTodoHandler(repository.Object);
+        var cache = new PassThroughCacheService();
+        var handler = new UpdateTodoHandler(repository.Object, cache);
         var result = await handler.Handle(
             new UpdateTodoCommand(todo.Id, new UpdateTodoRequest(Title: "New title", Completed: true)),
             CancellationToken.None);
@@ -33,6 +36,8 @@ public sealed class UpdateTodoHandlerTests
         Assert.True(result.Completed);
         Assert.Equal("done", result.Status);
         Assert.NotNull(updated);
+        Assert.Contains(CacheKeys.TodoById(todo.Id), cache.RemovedKeys);
+        Assert.Contains(CacheKeys.TodosByUserPrefix(todo.UserId), cache.RemovedPrefixes);
     }
 
     [Fact]
@@ -44,7 +49,7 @@ public sealed class UpdateTodoHandlerTests
             .Setup(r => r.GetByIdAsync(id, It.IsAny<CancellationToken>()))
             .ReturnsAsync((Todo?)null);
 
-        var handler = new UpdateTodoHandler(repository.Object);
+        var handler = new UpdateTodoHandler(repository.Object, new PassThroughCacheService());
 
         await Assert.ThrowsAsync<NotFoundException>(() =>
             handler.Handle(new UpdateTodoCommand(id, new UpdateTodoRequest(Title: "X")), CancellationToken.None));
@@ -59,7 +64,7 @@ public sealed class UpdateTodoHandlerTests
             .Setup(r => r.GetByIdAsync(todo.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(todo);
 
-        var handler = new UpdateTodoHandler(repository.Object);
+        var handler = new UpdateTodoHandler(repository.Object, new PassThroughCacheService());
 
         await Assert.ThrowsAsync<ValidationException>(() =>
             handler.Handle(

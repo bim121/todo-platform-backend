@@ -1,22 +1,25 @@
 using MediatR;
 using Microsoft.Extensions.Logging;
+using TodoPlatform.Application.Caching;
+using TodoPlatform.Application.Interfaces;
 using TodoPlatform.Domain.Events;
 
 namespace TodoPlatform.Application.Todos.EventHandlers;
 
-/// <summary>
-/// Stub until B-06 (Redis cache invalidation for todos:user:{'{userId}'}).
-/// </summary>
-public sealed class TodoCreatedCacheInvalidator(ILogger<TodoCreatedCacheInvalidator> logger)
+public sealed class TodoCreatedCacheInvalidator(
+    ICacheService cache,
+    ILogger<TodoCreatedCacheInvalidator> logger)
     : INotificationHandler<TodoCreatedEvent>
 {
-    public Task Handle(TodoCreatedEvent notification, CancellationToken cancellationToken)
+    public async Task Handle(TodoCreatedEvent notification, CancellationToken cancellationToken)
     {
+        await cache.RemoveByPrefixAsync(
+            CacheKeys.TodosByUserPrefix(notification.UserId),
+            cancellationToken);
+
         logger.LogDebug(
-            "Cache invalidation stub: todos list for user {UserId} (todo {TodoId})",
+            "Invalidated todos list cache for user {UserId} after create {TodoId}",
             notification.UserId,
             notification.TodoId);
-
-        return Task.CompletedTask;
     }
 }

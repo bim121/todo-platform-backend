@@ -1,6 +1,7 @@
 using Moq;
 using TodoPlatform.Application.Exceptions;
 using TodoPlatform.Application.Interfaces;
+using TodoPlatform.Application.Tests.Support;
 using TodoPlatform.Application.Todos.Queries.GetTodoById;
 using TodoPlatform.Domain.Entities;
 
@@ -17,7 +18,7 @@ public sealed class GetTodoByIdQueryHandlerTests
             .Setup(r => r.GetByIdAsync(todo.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(todo);
 
-        var handler = new GetTodoByIdQueryHandler(repository.Object);
+        var handler = new GetTodoByIdQueryHandler(repository.Object, new PassThroughCacheService());
         var result = await handler.Handle(new GetTodoByIdQuery(todo.Id), CancellationToken.None);
 
         Assert.Equal(todo.Id, result.Id);
@@ -33,7 +34,7 @@ public sealed class GetTodoByIdQueryHandlerTests
             .Setup(r => r.GetByIdAsync(id, It.IsAny<CancellationToken>()))
             .ReturnsAsync((Todo?)null);
 
-        var handler = new GetTodoByIdQueryHandler(repository.Object);
+        var handler = new GetTodoByIdQueryHandler(repository.Object, new PassThroughCacheService());
 
         await Assert.ThrowsAsync<NotFoundException>(() =>
             handler.Handle(new GetTodoByIdQuery(id), CancellationToken.None));

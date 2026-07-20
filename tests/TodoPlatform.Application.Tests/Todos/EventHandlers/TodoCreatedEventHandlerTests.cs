@@ -26,23 +26,4 @@ public sealed class TodoCreatedEventHandlerTests
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);
     }
-
-    [Fact]
-    public async Task CacheInvalidator_LogsStubMessage()
-    {
-        var logger = new Mock<ILogger<TodoCreatedCacheInvalidator>>();
-        var handler = new TodoCreatedCacheInvalidator(logger.Object);
-        var evt = new TodoCreatedEvent(Guid.NewGuid(), Guid.NewGuid(), "Cache");
-
-        await handler.Handle(evt, CancellationToken.None);
-
-        logger.Verify(
-            l => l.Log(
-                LogLevel.Debug,
-                It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((state, _) => state.ToString()!.Contains("Cache invalidation stub")),
-                It.IsAny<Exception>(),
-                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
-            Times.Once);
-    }
 }
