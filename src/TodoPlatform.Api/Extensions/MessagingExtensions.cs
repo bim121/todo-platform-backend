@@ -1,6 +1,8 @@
 using MassTransit;
 using TodoPlatform.Api.Configuration;
 using TodoPlatform.Infrastructure;
+using TodoPlatform.Infrastructure.Messaging;
+using TodoPlatform.Infrastructure.Messaging.Consumers;
 
 namespace TodoPlatform.Api.Extensions;
 
@@ -23,7 +25,7 @@ public static class MessagingExtensions
 
         services.AddMassTransit(bus =>
         {
-            bus.AddConsumers(typeof(DependencyInjection).Assembly);
+            bus.AddConsumer<SendTodoCreatedEmailConsumer>();
 
             bus.UsingRabbitMq((context, cfg) =>
             {
@@ -33,13 +35,14 @@ public static class MessagingExtensions
                     h.Password(options.Password);
                 });
 
-                // Queue for TodoCreatedIntegrationEvent email notifications (consumer in B-07.7).
                 cfg.ReceiveEndpoint(TodoCreatedEmailEndpoint, e =>
                 {
-                    e.ConfigureConsumers(context);
+                    e.ConfigureConsumer<SendTodoCreatedEmailConsumer>(context);
                 });
             });
         });
+
+        services.AddHostedService<OutboxProcessor>();
 
         return services;
     }

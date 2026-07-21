@@ -15,6 +15,7 @@ public static class RepositoryRegistration
         services.AddScoped<IUnitOfWork, EfUnitOfWork>();
         services.AddSingleton<IDomainEventToIntegrationEventMapper, DomainEventToIntegrationEventMapper>();
         services.AddScoped<IOutboxStore, EfOutboxStore>();
+        services.AddScoped<IProcessedMessageStore, EfProcessedMessageStore>();
         services.AddScoped<ISpecificationEvaluator, SpecificationEvaluator>();
         return services;
     }

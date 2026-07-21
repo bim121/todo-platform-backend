@@ -16,6 +16,8 @@ public class AppDbContext : DbContext
 
     public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
 
+    public DbSet<ProcessedMessage> ProcessedMessages => Set<ProcessedMessage>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
