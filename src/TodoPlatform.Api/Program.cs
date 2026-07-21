@@ -20,6 +20,7 @@ builder.Host.UseSerilog((context, services, configuration) =>
 
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddApplication(cfg => cfg.AddOpenBehavior(typeof(TransactionBehavior<,>)));
+builder.Services.AddApiMessaging(builder.Configuration, builder.Environment);
 
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();

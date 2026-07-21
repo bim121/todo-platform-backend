@@ -4,7 +4,9 @@ using TodoPlatform.Domain.Common;
 
 namespace TodoPlatform.Infrastructure.Persistence;
 
-public sealed class EfOutboxStore(AppDbContext db) : IOutboxStore
+public sealed class EfOutboxStore(
+    AppDbContext db,
+    IDomainEventToIntegrationEventMapper mapper) : IOutboxStore
 {
     private static readonly JsonSerializerOptions SerializerOptions = new()
     {
@@ -15,12 +17,15 @@ public sealed class EfOutboxStore(AppDbContext db) : IOutboxStore
     {
         foreach (var domainEvent in domainEvents)
         {
-            var eventType = domainEvent.GetType();
+            var envelope = mapper.Map(domainEvent);
+            if (envelope is null)
+                continue;
+
             db.OutboxMessages.Add(new OutboxMessage
             {
-                Type = eventType.FullName ?? eventType.Name,
-                Payload = JsonSerializer.Serialize(domainEvent, eventType, SerializerOptions),
-                CreatedAt = domainEvent.OccurredOn
+                Type = envelope.Type,
+                Payload = JsonSerializer.Serialize(envelope, SerializerOptions),
+                CreatedAt = envelope.OccurredOn
             });
         }
     }

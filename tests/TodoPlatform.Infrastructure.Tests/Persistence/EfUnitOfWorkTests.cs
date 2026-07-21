@@ -1,8 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 using Moq;
 using TodoPlatform.Application.Common;
+using TodoPlatform.Application.IntegrationEvents;
 using TodoPlatform.Domain.Entities;
 using TodoPlatform.Domain.Events;
+using TodoPlatform.Infrastructure.Messaging;
 using TodoPlatform.Infrastructure.Persistence;
 
 namespace TodoPlatform.Infrastructure.Tests.Persistence;
@@ -25,7 +27,10 @@ public sealed class EfUnitOfWorkTests
         Assert.Single(await db.Todos.ToListAsync());
         var outbox = await db.OutboxMessages.ToListAsync();
         Assert.Single(outbox);
-        Assert.Contains(nameof(TodoCreatedEvent), outbox[0].Type, StringComparison.Ordinal);
+        Assert.Equal(TodoCreatedIntegrationEvent.EventTypeName, outbox[0].Type);
+        Assert.Contains("\"type\":\"TodoCreatedIntegrationEvent\"", outbox[0].Payload, StringComparison.Ordinal);
+        Assert.Contains("\"version\":1", outbox[0].Payload, StringComparison.Ordinal);
+        Assert.Contains("\"data\":", outbox[0].Payload, StringComparison.Ordinal);
         Assert.Null(outbox[0].ProcessedAt);
         Assert.Empty(todo.DomainEvents);
 
@@ -100,7 +105,7 @@ public sealed class EfUnitOfWorkTests
     }
 
     private static EfUnitOfWork CreateUnitOfWork(AppDbContext db, IDomainEventDispatcher dispatcher) =>
-        new(db, dispatcher, new EfOutboxStore(db));
+        new(db, dispatcher, new EfOutboxStore(db, new DomainEventToIntegrationEventMapper()));
 
     private static DbContextOptions<AppDbContext> CreateOptions() =>
         new DbContextOptionsBuilder<AppDbContext>()
