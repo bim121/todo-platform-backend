@@ -21,6 +21,8 @@ public static class IntegrationEventPayloadDeserializer
         {
             TodoCreatedIntegrationEvent.EventTypeName =>
                 dataElement.Deserialize<TodoCreatedIntegrationEvent>(SerializerOptions),
+            TodoCompletedIntegrationEvent.EventTypeName =>
+                dataElement.Deserialize<TodoCompletedIntegrationEvent>(SerializerOptions),
             _ => null
         };
     }

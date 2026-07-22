@@ -9,6 +9,7 @@ namespace TodoPlatform.Infrastructure.Messaging;
 
 /// <summary>
 /// Polls <c>outbox_messages</c>, publishes integration events via MassTransit, then marks them processed.
+/// Future: Kafka audit stream — B-16 (outbox rows can also fan-out to a Kafka producer).
 /// </summary>
 public sealed class OutboxProcessor(
     IServiceScopeFactory scopeFactory,

@@ -30,9 +30,25 @@ public sealed class DomainEventToIntegrationEventMapperTests
     }
 
     [Fact]
+    public void Map_TodoCompletedEvent_ReturnsEnvelope()
+    {
+        var todoId = Guid.NewGuid();
+        var userId = Guid.NewGuid();
+        var domainEvent = new TodoCompletedEvent(todoId, userId);
+
+        var envelope = _sut.Map(domainEvent);
+
+        Assert.NotNull(envelope);
+        Assert.Equal(TodoCompletedIntegrationEvent.EventTypeName, envelope.Type);
+        var data = Assert.IsType<TodoCompletedIntegrationEvent>(envelope.Data);
+        Assert.Equal(todoId, data.TodoId);
+        Assert.Equal(userId, data.UserId);
+    }
+
+    [Fact]
     public void Map_UnknownDomainEvent_ReturnsNull()
     {
-        var domainEvent = new TodoCompletedEvent(Guid.NewGuid(), Guid.NewGuid());
+        var domainEvent = new TodoDeletedEvent(Guid.NewGuid(), Guid.NewGuid());
 
         Assert.Null(_sut.Map(domainEvent));
     }

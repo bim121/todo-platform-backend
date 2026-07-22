@@ -1,6 +1,6 @@
 using MassTransit;
 using TodoPlatform.Api.Configuration;
-using TodoPlatform.Infrastructure;
+using TodoPlatform.Application.Interfaces;
 using TodoPlatform.Infrastructure.Messaging;
 using TodoPlatform.Infrastructure.Messaging.Consumers;
 
@@ -9,6 +9,7 @@ namespace TodoPlatform.Api.Extensions;
 public static class MessagingExtensions
 {
     public const string TodoCreatedEmailEndpoint = "todo-created-email";
+    public const string TodoCompletedNotificationEndpoint = "todo-completed-notification";
 
     public static IServiceCollection AddApiMessaging(
         this IServiceCollection services,
@@ -16,6 +17,8 @@ public static class MessagingExtensions
         IHostEnvironment environment)
     {
         services.Configure<RabbitMqOptions>(configuration.GetSection(RabbitMqOptions.SectionName));
+        services.Configure<SmtpOptions>(configuration.GetSection(SmtpOptions.SectionName));
+        services.AddSingleton<IEmailSender, EmailSender>();
 
         var options = configuration.GetSection(RabbitMqOptions.SectionName).Get<RabbitMqOptions>()
             ?? new RabbitMqOptions();
@@ -26,6 +29,7 @@ public static class MessagingExtensions
         services.AddMassTransit(bus =>
         {
             bus.AddConsumer<SendTodoCreatedEmailConsumer>();
+            bus.AddConsumer<TodoCompletedNotificationConsumer>();
 
             bus.UsingRabbitMq((context, cfg) =>
             {
@@ -37,7 +41,14 @@ public static class MessagingExtensions
 
                 cfg.ReceiveEndpoint(TodoCreatedEmailEndpoint, e =>
                 {
+                    ConfigureRetry(e);
                     e.ConfigureConsumer<SendTodoCreatedEmailConsumer>(context);
+                });
+
+                cfg.ReceiveEndpoint(TodoCompletedNotificationEndpoint, e =>
+                {
+                    ConfigureRetry(e);
+                    e.ConfigureConsumer<TodoCompletedNotificationConsumer>(context);
                 });
             });
         });
@@ -45,5 +56,15 @@ public static class MessagingExtensions
         services.AddHostedService<OutboxProcessor>();
 
         return services;
+    }
+
+    private static void ConfigureRetry(IReceiveEndpointConfigurator endpoint)
+    {
+        // 3 attempts with exponential backoff (B-07.7). Failed messages go to _error queue.
+        endpoint.UseMessageRetry(r => r.Exponential(
+            retryLimit: 3,
+            minInterval: TimeSpan.FromSeconds(1),
+            maxInterval: TimeSpan.FromSeconds(30),
+            intervalDelta: TimeSpan.FromSeconds(2)));
     }
 }

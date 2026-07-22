@@ -19,6 +19,14 @@ public sealed class DomainEventToIntegrationEventMapper : IDomainEventToIntegrat
                     created.Title,
                     created.OccurredOn),
                 OccurredOn: created.OccurredOn),
+            TodoCompletedEvent completed => new IntegrationEventEnvelope(
+                Type: TodoCompletedIntegrationEvent.EventTypeName,
+                Version: IntegrationEventEnvelope.CurrentVersion,
+                Data: new TodoCompletedIntegrationEvent(
+                    completed.TodoId,
+                    completed.UserId,
+                    completed.OccurredOn),
+                OccurredOn: completed.OccurredOn),
             _ => null
         };
 }

@@ -7,10 +7,12 @@ namespace TodoPlatform.Infrastructure.Messaging.Consumers;
 
 /// <summary>
 /// Simulated email on todo created. Side effect is async via outbox → RabbitMQ (B-07).
-/// Full SMTP / Mailhog wiring is B-07.7.
+/// Optional SMTP delivery targets Mailhog when <c>Smtp:Enabled</c> is true.
 /// </summary>
 public sealed class SendTodoCreatedEmailConsumer(
     IProcessedMessageStore processedMessages,
+    IUserRepository users,
+    IEmailSender emailSender,
     ILogger<SendTodoCreatedEmailConsumer> logger) : IConsumer<TodoCreatedIntegrationEvent>
 {
     public async Task Consume(ConsumeContext<TodoCreatedIntegrationEvent> context)
@@ -27,12 +29,18 @@ public sealed class SendTodoCreatedEmailConsumer(
             return;
         }
 
-        // Simulated SMTP — structured log stands in for email send until B-07.7.
+        var user = await users.GetByIdAsync(context.Message.UserId, context.CancellationToken);
+        var userEmail = user?.Email ?? "(unknown)";
+
+        await emailSender.SendAsync(
+            to: userEmail,
+            subject: $"Todo created: {context.Message.Title}",
+            body: $"Your todo \"{context.Message.Title}\" (id {context.Message.TodoId}) was created.",
+            cancellationToken: context.CancellationToken);
+
         logger.LogInformation(
-            "TodoCreatedEmailSent {TodoId} {UserId} {Title} {MessageId}",
+            "TodoCreatedEmailSent {TodoId} {UserEmail}",
             context.Message.TodoId,
-            context.Message.UserId,
-            context.Message.Title,
-            messageId);
+            userEmail);
     }
 }
