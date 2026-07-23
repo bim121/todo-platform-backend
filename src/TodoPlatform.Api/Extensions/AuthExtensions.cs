@@ -51,11 +51,15 @@ public static class AuthExtensions
                 options.Authority = keycloak.Authority;
                 options.Audience = keycloak.Audience;
                 options.RequireHttpsMetadata = keycloak.RequireHttpsMetadata;
-                options.MetadataAddress = $"{keycloak.Authority.TrimEnd('/')}/.well-known/openid-configuration";
+                options.MetadataAddress = string.IsNullOrWhiteSpace(keycloak.MetadataAddress)
+                    ? $"{keycloak.Authority.TrimEnd('/')}/.well-known/openid-configuration"
+                    : keycloak.MetadataAddress;
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateAudience = true,
                     ValidAudience = keycloak.Audience,
+                    ValidateIssuer = true,
+                    ValidIssuer = keycloak.Authority.TrimEnd('/'),
                     RoleClaimType = ClaimTypes.Role,
                 };
                 options.Events = new JwtBearerEvents

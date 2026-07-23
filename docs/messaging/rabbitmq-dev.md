@@ -5,7 +5,7 @@
 ```bash
 docker compose up -d postgres redis rabbitmq
 # optional Mailhog UI for email capture:
-docker compose --profile dev-ui up -d mailhog
+docker compose --profile full up -d mailhog
 ```
 
 | Service | URL / port | Credentials |

@@ -1,5 +1,10 @@
 # Unified stack: API + Postgres + Redis + RabbitMQ + Keycloak (B-08)
-# Optional UI: docker compose --profile dev-ui up -d
+#
+# Profiles:
+#   (default)  core stack
+#   full       + Mailhog + Redis Commander  →  docker compose --profile full up -d
+#   dev        + api-watch (dotnet watch)   →  docker compose --profile dev up -d --scale api=0
+#   dev-ui     alias of full (backward compatible)
 
 networks:
   todo-net:
@@ -9,17 +14,17 @@ services:
   postgres:
     image: postgres:16-alpine
     environment:
-      POSTGRES_USER: todo
-      POSTGRES_PASSWORD: todo
-      POSTGRES_DB: tododb
+      POSTGRES_USER: ${POSTGRES_USER:-todo}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-todo}
+      POSTGRES_DB: ${POSTGRES_DB:-tododb}
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     networks:
       - todo-net
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U todo -d tododb"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-todo} -d ${POSTGRES_DB:-tododb}"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -27,7 +32,7 @@ services:
   redis:
     image: redis:7-alpine
     ports:
-      - "6379:6379"
+      - "${REDIS_PORT:-6379}:6379"
     volumes:
       - redisdata:/data
     command: ["redis-server", "--appendonly", "yes"]
@@ -42,11 +47,11 @@ services:
   rabbitmq:
     image: rabbitmq:3-management-alpine
     environment:
-      RABBITMQ_DEFAULT_USER: todo
-      RABBITMQ_DEFAULT_PASS: todo
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-todo}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-todo}
     ports:
-      - "5672:5672"
-      - "15672:15672"
+      - "${RABBITMQ_PORT:-5672}:5672"
+      - "${RABBITMQ_MGMT_PORT:-15672}:15672"
     volumes:
       - rabbitmqdata:/var/lib/rabbitmq
     networks:
@@ -64,15 +69,17 @@ services:
       - --import-realm
       - --spi-import-export-import-strategy=OVERWRITE_EXISTING
     environment:
-      KEYCLOAK_ADMIN: admin
-      KEYCLOAK_ADMIN_PASSWORD: admin
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN:-admin}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
       KC_HTTP_ENABLED: "true"
-      # Browser hits host port 8180 (API occupies 8080)
-      KC_HOSTNAME: localhost
-      KC_HOSTNAME_PORT: "8180"
+      # Tokens issued with iss = http://localhost:8180/... (browser-facing)
+      KC_HOSTNAME: ${KC_HOSTNAME:-localhost}
+      KC_HOSTNAME_PORT: ${KC_HOSTNAME_PORT:-8180}
       KC_HOSTNAME_STRICT: "false"
+      KC_PROXY_HEADERS: xforwarded
+      KC_HTTP_RELATIVE_PATH: /
     ports:
-      - "8180:8080"
+      - "${KEYCLOAK_PORT:-8180}:8080"
     volumes:
       - ./infra/keycloak:/opt/keycloak/data/import
     networks:
@@ -83,23 +90,25 @@ services:
       context: .
       dockerfile: src/TodoPlatform.Api/Dockerfile
     ports:
-      - "8080:8080"
+      - "${API_PORT:-8080}:8080"
     environment:
-      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
       ASPNETCORE_URLS: http://+:8080
-      Database__AutoMigrate: "true"
-      ConnectionStrings__Default: Host=postgres;Port=5432;Database=tododb;Username=todo;Password=todo
+      Database__AutoMigrate: ${DATABASE_AUTO_MIGRATE:-true}
+      ConnectionStrings__Default: Host=postgres;Port=5432;Database=${POSTGRES_DB:-tododb};Username=${POSTGRES_USER:-todo};Password=${POSTGRES_PASSWORD:-todo}
       ConnectionStrings__Redis: redis:6379
+      Cors__Origins__0: ${CORS_ORIGIN:-http://localhost:4200}
       RabbitMq__Enabled: "true"
       RabbitMq__Host: rabbitmq
       RabbitMq__Port: "5672"
-      RabbitMq__Username: todo
-      RabbitMq__Password: todo
-      # Internal DNS for OIDC metadata fetch from the API container (B-08.5 will refine issuer/browser)
-      Keycloak__Authority: http://keycloak:8080/realms/todo-platform
-      Keycloak__Audience: todo-api
+      RabbitMq__Username: ${RABBITMQ_USER:-todo}
+      RabbitMq__Password: ${RABBITMQ_PASSWORD:-todo}
+      # iss in JWT (browser) vs discovery URL (Docker DNS)
+      Keycloak__Authority: ${KEYCLOAK_AUTHORITY:-http://localhost:8180/realms/todo-platform}
+      Keycloak__MetadataAddress: ${KEYCLOAK_METADATA_ADDRESS:-http://keycloak:8080/realms/todo-platform/.well-known/openid-configuration}
+      Keycloak__Audience: ${KEYCLOAK_AUDIENCE:-todo-api}
       Keycloak__RequireHttpsMetadata: "false"
-      Smtp__Enabled: "false"
+      Smtp__Enabled: ${SMTP_ENABLED:-false}
       Smtp__Host: mailhog
       Smtp__Port: "1025"
     networks:
@@ -118,15 +127,63 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
-      start_period: 20s
+      start_period: 30s
+
+  # Optional hot-reload API (profile: dev). Stop published api to free port 8080:
+  #   docker compose --profile dev up -d --scale api=0
+  api-watch:
+    profiles: ["dev"]
+    image: mcr.microsoft.com/dotnet/sdk:10.0
+    working_dir: /workspace
+    volumes:
+      - ./src:/workspace/src
+      - ./TodoPlatform.slnx:/workspace/TodoPlatform.slnx
+    command:
+      [
+        "dotnet",
+        "watch",
+        "run",
+        "--project",
+        "src/TodoPlatform.Api/TodoPlatform.Api.csproj",
+        "--urls",
+        "http://0.0.0.0:8080",
+      ]
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      Database__AutoMigrate: "true"
+      ConnectionStrings__Default: Host=postgres;Port=5432;Database=${POSTGRES_DB:-tododb};Username=${POSTGRES_USER:-todo};Password=${POSTGRES_PASSWORD:-todo}
+      ConnectionStrings__Redis: redis:6379
+      Cors__Origins__0: ${CORS_ORIGIN:-http://localhost:4200}
+      RabbitMq__Enabled: "true"
+      RabbitMq__Host: rabbitmq
+      RabbitMq__Port: "5672"
+      RabbitMq__Username: ${RABBITMQ_USER:-todo}
+      RabbitMq__Password: ${RABBITMQ_PASSWORD:-todo}
+      Keycloak__Authority: ${KEYCLOAK_AUTHORITY:-http://localhost:8180/realms/todo-platform}
+      Keycloak__MetadataAddress: ${KEYCLOAK_METADATA_ADDRESS:-http://keycloak:8080/realms/todo-platform/.well-known/openid-configuration}
+      Keycloak__Audience: ${KEYCLOAK_AUDIENCE:-todo-api}
+      Keycloak__RequireHttpsMetadata: "false"
+    ports:
+      - "${API_PORT:-8080}:8080"
+    networks:
+      - todo-net
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      keycloak:
+        condition: service_started
 
   redis-commander:
     image: rediscommander/redis-commander:latest
-    profiles: ["dev-ui"]
+    profiles: ["full", "dev-ui"]
     environment:
       REDIS_HOSTS: local:redis:6379
     ports:
-      - "8081:8081"
+      - "${REDIS_COMMANDER_PORT:-8081}:8081"
     networks:
       - todo-net
     depends_on:
@@ -135,10 +192,10 @@ services:
 
   mailhog:
     image: mailhog/mailhog:v1.0.1
-    profiles: ["dev-ui"]
+    profiles: ["full", "dev-ui"]
     ports:
-      - "1025:1025"
-      - "8025:8025"
+      - "${MAILHOG_SMTP_PORT:-1025}:1025"
+      - "${MAILHOG_UI_PORT:-8025}:8025"
     networks:
       - todo-net
 

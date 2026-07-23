@@ -26,7 +26,7 @@ public class AuthController(
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status410Gone)]
     public ActionResult Login()
     {
-        var authority = configuration["Keycloak:Authority"] ?? "http://localhost:8080/realms/todo-platform";
+        var authority = configuration["Keycloak:Authority"] ?? "http://localhost:8180/realms/todo-platform";
         var tokenEndpoint = $"{authority.TrimEnd('/')}/protocol/openid-connect/token";
 
         return Problem(

@@ -17,7 +17,7 @@ public static class SwaggerConfiguration
         var authority = configuration
             .GetSection(KeycloakOptions.SectionName)
             .Get<KeycloakOptions>()?.Authority
-            .TrimEnd('/') ?? "http://localhost:8080/realms/todo-platform";
+            .TrimEnd('/') ?? "http://localhost:8180/realms/todo-platform";
 
         services.AddSwaggerGen(options =>
         {

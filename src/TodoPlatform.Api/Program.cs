@@ -45,7 +45,7 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-await app.MigrateDevDatabaseAsync();
+await app.MigrateOnStartupAsync();
 
 app.UseExceptionHandler();
 

@@ -2,18 +2,17 @@ using FluentMigrator.Runner;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 namespace TodoPlatform.Infrastructure.Persistence;
 
 public static class DatabaseInitializer
 {
-    public static async Task MigrateDevDatabaseAsync(this WebApplication app)
+    /// <summary>
+    /// Applies FluentMigrator + <see cref="DbSeeder"/> when <c>Database:AutoMigrate</c> is true (compose / local).
+    /// </summary>
+    public static async Task MigrateOnStartupAsync(this WebApplication app)
     {
-        if (!app.Environment.IsDevelopment())
-            return;
-
         if (!app.Configuration.GetValue("Database:AutoMigrate", false))
             return;
 
@@ -36,6 +35,9 @@ public static class DatabaseInitializer
         {
             logger.LogWarning(ex, "FluentMigrator: migrations/seed skipped (is Postgres running?).");
         }
-
     }
+
+    /// <summary>Obsolete name — use <see cref="MigrateOnStartupAsync"/>.</summary>
+    public static Task MigrateDevDatabaseAsync(this WebApplication app) =>
+        MigrateOnStartupAsync(app);
 }

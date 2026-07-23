@@ -1,37 +1,51 @@
 # Todo Platform Backend — ASP.NET Core
 
+[![Docker Smoke](https://github.com/bim121/todo-platform-backend/actions/workflows/docker-smoke.yml/badge.svg)](https://github.com/bim121/todo-platform-backend/actions/workflows/docker-smoke.yml)
+
 Enterprise-grade todo platform backend built with Clean Architecture, CQRS (MediatR), PostgreSQL, Keycloak, and comprehensive test coverage.
 
 ## Tech Stack
 
-- .NET / ASP.NET Core Web API
+- .NET 10 / ASP.NET Core Web API
 - Clean Architecture (Api → Application → Domain → Infrastructure)
 - Entity Framework Core + PostgreSQL
-- Keycloak (IAM)
+- Redis, RabbitMQ (MassTransit), Keycloak (IAM)
 - MediatR, Specification pattern, Outbox
 - Serilog, Swagger, Health checks
 - xUnit integration & unit tests
+- Docker Compose full stack
 
-## Quick Start
-
-### With Docker (PostgreSQL + Keycloak)
+## Quick Start (Docker — recommended)
 
 ```bash
 git clone https://github.com/bim121/todo-platform-backend.git
 cd todo-platform-backend
-docker compose up -d
-dotnet build TodoPlatform.slnx
-dotnet test TodoPlatform.slnx
-dotnet run --project src/TodoPlatform.Api
+cp .env.example .env
+./scripts/dev-up.sh          # or: make up
+./scripts/smoke.sh           # health + Keycloak token + GET /api/todos
 ```
 
 | URL | Description |
 |-----|-------------|
-| http://localhost:5000/swagger | Swagger UI |
-| http://localhost:5000/health | Health check |
-| http://localhost:8080 | Keycloak admin (admin/admin) |
+| http://localhost:8080/swagger | API Swagger |
+| http://localhost:8080/health/ready | Ready probe |
+| http://localhost:8180/admin | Keycloak (`admin` / `admin`) |
+| http://localhost:15672 | RabbitMQ management (`todo` / `todo`) |
 
-### Without Docker
+Profiles: `make up-full` (Mailhog + Redis Commander), `make up-dev` (dotnet watch).  
+Reset data: `make reset` (`docker compose down -v && up`).
+
+Full ports / Keycloak issuer notes: [docs/docker/compose-dev.md](./docs/docker/compose-dev.md)
+
+### API on host, infra in Docker
+
+```bash
+docker compose up -d postgres redis rabbitmq keycloak
+dotnet run --project src/TodoPlatform.Api
+# Swagger: http://localhost:5000 (launchSettings)
+```
+
+## Without Docker
 
 ```bash
 dotnet build TodoPlatform.slnx
@@ -46,9 +60,9 @@ src/
 ├── TodoPlatform.Api/              # Endpoints, middleware, auth
 ├── TodoPlatform.Application/      # Commands, queries, validators (MediatR)
 ├── TodoPlatform.Domain/           # Entities, domain events
-└── TodoPlatform.Infrastructure/   # EF Core, repositories, Keycloak, outbox
+└── TodoPlatform.Infrastructure/   # EF Core, Redis, MassTransit, outbox
 tests/
-├── TodoPlatform.Api.Tests/        # Integration tests (WebApplicationFactory)
+├── TodoPlatform.Api.Tests/
 ├── TodoPlatform.Application.Tests/
 └── TodoPlatform.Infrastructure.Tests/
 ```
@@ -57,13 +71,16 @@ tests/
 
 - **Clean Architecture** with clear layer boundaries and dependency inversion
 - **Specification pattern** for composable EF Core queries
-- **Domain events + outbox** for reliable async processing
+- **Domain events + transactional outbox** → RabbitMQ consumers
 - **API versioning** and OpenAPI contract tests
-- **Auth integration** with Keycloak
+- **Auth** with Keycloak (JWT + realm roles)
 - **ADR documentation** in `docs/adr/`
 
 ## Documentation
 
+- [Docker Compose (B-08)](./docs/docker/compose-dev.md)
+- [Keycloak dev](./docs/auth/keycloak-dev.md)
+- [RabbitMQ / messaging](./docs/messaging/rabbitmq-dev.md)
 - [Architecture Decision Records](./docs/adr/)
 - [Development phases](./plans/README.md)
 
