@@ -1,3 +1,10 @@
+# Unified stack: API + Postgres + Redis + RabbitMQ + Keycloak (B-08)
+# Optional UI: docker compose --profile dev-ui up -d
+
+networks:
+  todo-net:
+    driver: bridge
+
 services:
   postgres:
     image: postgres:16-alpine
@@ -9,6 +16,13 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    networks:
+      - todo-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U todo -d tododb"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   redis:
     image: redis:7-alpine
@@ -17,39 +31,13 @@ services:
     volumes:
       - redisdata:/data
     command: ["redis-server", "--appendonly", "yes"]
+    networks:
+      - todo-net
     healthcheck:
       test: ["CMD", "redis-cli", "PING"]
       interval: 5s
       timeout: 3s
       retries: 5
-
-  redis-commander:
-    image: rediscommander/redis-commander:latest
-    profiles: ["dev-ui"]
-    environment:
-      REDIS_HOSTS: local:redis:6379
-    ports:
-      - "8081:8081"
-    depends_on:
-      redis:
-        condition: service_healthy
-
-  keycloak:
-    image: quay.io/keycloak/keycloak:26.0.7
-    command:
-      - start-dev
-      - --import-realm
-      - --spi-import-export-import-strategy=OVERWRITE_EXISTING
-    environment:
-      KEYCLOAK_ADMIN: admin
-      KEYCLOAK_ADMIN_PASSWORD: admin
-      KC_HTTP_ENABLED: "true"
-      KC_HOSTNAME: localhost
-      KC_HOSTNAME_PORT: 8080
-    ports:
-      - "8080:8080"
-    volumes:
-      - ./infra/keycloak:/opt/keycloak/data/import
 
   rabbitmq:
     image: rabbitmq:3-management-alpine
@@ -61,11 +49,89 @@ services:
       - "15672:15672"
     volumes:
       - rabbitmqdata:/var/lib/rabbitmq
+    networks:
+      - todo-net
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0.7
+    command:
+      - start-dev
+      - --import-realm
+      - --spi-import-export-import-strategy=OVERWRITE_EXISTING
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_HTTP_ENABLED: "true"
+      # Browser hits host port 8180 (API occupies 8080)
+      KC_HOSTNAME: localhost
+      KC_HOSTNAME_PORT: "8180"
+      KC_HOSTNAME_STRICT: "false"
+    ports:
+      - "8180:8080"
+    volumes:
+      - ./infra/keycloak:/opt/keycloak/data/import
+    networks:
+      - todo-net
+
+  api:
+    build:
+      context: .
+      dockerfile: src/TodoPlatform.Api/Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      Database__AutoMigrate: "true"
+      ConnectionStrings__Default: Host=postgres;Port=5432;Database=tododb;Username=todo;Password=todo
+      ConnectionStrings__Redis: redis:6379
+      RabbitMq__Enabled: "true"
+      RabbitMq__Host: rabbitmq
+      RabbitMq__Port: "5672"
+      RabbitMq__Username: todo
+      RabbitMq__Password: todo
+      # Internal DNS for OIDC metadata fetch from the API container (B-08.5 will refine issuer/browser)
+      Keycloak__Authority: http://keycloak:8080/realms/todo-platform
+      Keycloak__Audience: todo-api
+      Keycloak__RequireHttpsMetadata: "false"
+      Smtp__Enabled: "false"
+      Smtp__Host: mailhog
+      Smtp__Port: "1025"
+    networks:
+      - todo-net
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      keycloak:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    profiles: ["dev-ui"]
+    environment:
+      REDIS_HOSTS: local:redis:6379
+    ports:
+      - "8081:8081"
+    networks:
+      - todo-net
+    depends_on:
+      redis:
+        condition: service_healthy
 
   mailhog:
     image: mailhog/mailhog:v1.0.1
@@ -73,6 +139,8 @@ services:
     ports:
       - "1025:1025"
       - "8025:8025"
+    networks:
+      - todo-net
 
 volumes:
   pgdata:
