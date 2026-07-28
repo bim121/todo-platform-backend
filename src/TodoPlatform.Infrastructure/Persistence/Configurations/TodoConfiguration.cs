@@ -31,6 +31,11 @@ public class TodoConfiguration : IEntityTypeConfiguration<Todo>
         builder.HasIndex(t => t.Status);
         builder.HasIndex(t => new { t.UserId, t.Completed });
 
+        // B-09.3 — matches GetTodos ActiveOnly (Completed = false)
+        builder.HasIndex(t => t.UserId)
+            .HasFilter("\"Completed\" = false")
+            .HasDatabaseName("IX_todos_UserId_Active");
+
         builder.HasOne<User>()
             .WithMany()
             .HasForeignKey(t => t.UserId)
