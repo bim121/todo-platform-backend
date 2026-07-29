@@ -51,8 +51,8 @@ public sealed class GetTodosQueryHandler(
                     request.Skip,
                     request.Take);
 
-                var todos = await repository.ListAsync(specification, ct);
-                return (IReadOnlyList<TodoDto>)todos.Select(TodoDto.FromEntity).ToList();
+                // SQL projection — one query, no entity graph / Include (B-09.4).
+                return await repository.ListDtosAsync(specification, ct);
             },
             CacheTtl.TodosList,
             cancellationToken,

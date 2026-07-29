@@ -100,7 +100,7 @@ services:
       ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
       ASPNETCORE_URLS: http://+:8080
       Database__AutoMigrate: ${DATABASE_AUTO_MIGRATE:-true}
-      ConnectionStrings__Default: Host=postgres;Port=5432;Database=${POSTGRES_DB:-tododb};Username=${POSTGRES_USER:-todo};Password=${POSTGRES_PASSWORD:-todo}
+      ConnectionStrings__Default: Host=postgres;Port=5432;Database=${POSTGRES_DB:-tododb};Username=${POSTGRES_USER:-todo};Password=${POSTGRES_PASSWORD:-todo};Maximum Pool Size=100;Minimum Pool Size=0;Timeout=15
       ConnectionStrings__Redis: redis:6379
       Cors__Origins__0: ${CORS_ORIGIN:-http://localhost:4200}
       RabbitMq__Enabled: "true"
@@ -156,7 +156,7 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       Database__AutoMigrate: "true"
-      ConnectionStrings__Default: Host=postgres;Port=5432;Database=${POSTGRES_DB:-tododb};Username=${POSTGRES_USER:-todo};Password=${POSTGRES_PASSWORD:-todo}
+      ConnectionStrings__Default: Host=postgres;Port=5432;Database=${POSTGRES_DB:-tododb};Username=${POSTGRES_USER:-todo};Password=${POSTGRES_PASSWORD:-todo};Maximum Pool Size=100;Minimum Pool Size=0;Timeout=15
       ConnectionStrings__Redis: redis:6379
       Cors__Origins__0: ${CORS_ORIGIN:-http://localhost:4200}
       RabbitMq__Enabled: "true"

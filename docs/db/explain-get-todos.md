@@ -126,3 +126,54 @@ docker compose exec -T postgres psql -U todo -d tododb -c "\di *todos*"
 ```
 
 Expect at least: `IX_todos_UserId`, `IX_todos_UserId_Completed`, `IX_todos_UserId_Active`.
+
+---
+
+## B-09.4–B-09.7 EF tuning (follow-up)
+
+### Projection (B-09.4)
+
+`GetTodosQueryHandler` → `ITodoRepository.ListDtosAsync`:
+
+- `SELECT` only DTO columns (Id, Title, Completed, UserId, Status, Priority as API strings)
+- **No** entity materialization, **no** `.Include(User)` (UserId is enough)
+- Spec always `ORDER BY "Id"` before `Skip`/`Take` (stable paging)
+
+Rough SQL shape after tuning:
+
+```sql
+SELECT t."Id", t."Title", t."Completed", t."UserId", ...
+FROM todos AS t
+WHERE t."UserId" = @userId
+  -- AND t."Completed" = false when activeOnly
+ORDER BY t."Id"
+LIMIT @take OFFSET @skip;
+```
+
+### N+1 audit (B-09.5)
+
+| Check | Result |
+|-------|--------|
+| Todo list Include User | **None** — no navigation used on list |
+| Loop `GetById` in handlers | **None** found |
+| Spec Includes | Empty for GetTodos; AsNoTracking default **true** |
+| Dev EF logging | `EnableSensitiveDataLogging` + Serilog `Microsoft.EntityFrameworkCore.Database.Command` = Information |
+
+### Pooling (B-09.6)
+
+See [connection-pooling.md](./connection-pooling.md). Connection string includes `Maximum Pool Size=100`.
+
+### Slow queries (B-09.7)
+
+`SlowQueryInterceptor` logs when command duration ≥ **200 ms** with property `{SlowQuery}=true` and increments `SlowQueryMetrics.Count` (prep for B-24 OTel).
+
+### Improvement metrics (order of magnitude)
+
+| Scenario | Typical local picture |
+|----------|------------------------|
+| 10k rows, Seq Scan, `SELECT *` | ~tens of ms+ (grows with table) |
+| Same + Index Scan on UserId/Active | ~low single-digit ms |
+| + DTO projection (fewer columns) | slightly less I/O / memory vs full entity |
+| Cached GetTodos (Redis) | ~sub-ms after warm cache |
+
+Exact numbers vary by machine; re-run EXPLAIN after `scripts/seed-load-test.sql` and compare `Execution Time` before/after indexes.

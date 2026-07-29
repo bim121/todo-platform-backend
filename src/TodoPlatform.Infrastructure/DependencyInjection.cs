@@ -1,4 +1,5 @@
 using TodoPlatform.Application.Caching;
+using TodoPlatform.Application.Diagnostics;
 using TodoPlatform.Application.Interfaces;
 using TodoPlatform.Application.Services;
 using TodoPlatform.Infrastructure.Caching;
@@ -9,6 +10,7 @@ using TodoPlatform.Infrastructure.Security;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using StackExchange.Redis;
 
 namespace TodoPlatform.Infrastructure;
@@ -17,25 +19,46 @@ public static class DependencyInjection
 {
     public const string RedisInstanceName = "TodoPlatform:";
 
+    /// <summary>Appended when the connection string has no pool size (B-09.6).</summary>
+    public const string DefaultNpgsqlPoolSettings = "Maximum Pool Size=100;Minimum Pool Size=0;Timeout=15";
+
     public static IServiceCollection AddInfrastructure(
         this IServiceCollection services,
         IConfiguration configuration)
     {
+        services.AddSingleton<SlowQueryMetrics>();
+        services.AddSingleton<SlowQueryInterceptor>();
+
         if (configuration.GetValue("Database:UseInMemory", false))
         {
             var databaseName = configuration.GetValue<string>("Database:InMemoryName")
                 ?? "TodoPlatformTests";
 
-            services.AddDbContext<AppDbContext>(options =>
-                options.UseInMemoryDatabase(databaseName));
+            services.AddDbContext<AppDbContext>((sp, options) =>
+            {
+                options.UseInMemoryDatabase(databaseName);
+                options.AddInterceptors(sp.GetRequiredService<SlowQueryInterceptor>());
+            });
         }
         else
         {
-            var connectionString = configuration.GetConnectionString("Default")
-                ?? throw new InvalidOperationException("Connection string 'Default' is not configured.");
+            var connectionString = EnsurePoolSettings(
+                configuration.GetConnectionString("Default")
+                ?? throw new InvalidOperationException("Connection string 'Default' is not configured."));
 
-            services.AddDbContext<AppDbContext>(options =>
-                options.UseNpgsql(connectionString));
+            services.AddDbContext<AppDbContext>((sp, options) =>
+            {
+                options.UseNpgsql(connectionString);
+                options.AddInterceptors(sp.GetRequiredService<SlowQueryInterceptor>());
+
+                var env = sp.GetService<IHostEnvironment>();
+                if (env?.IsDevelopment() == true)
+                {
+                    // B-09.5 — see parameter values in EF SQL logs (dev only).
+                    options.EnableSensitiveDataLogging();
+                    options.EnableDetailedErrors();
+                }
+            });
 
             services.AddFluentMigrator(connectionString);
         }
@@ -48,6 +71,15 @@ public static class DependencyInjection
         services.AddCaching(configuration);
 
         return services;
+    }
+
+    public static string EnsurePoolSettings(string connectionString)
+    {
+        if (connectionString.Contains("Maximum Pool Size", StringComparison.OrdinalIgnoreCase))
+            return connectionString;
+
+        var trimmed = connectionString.TrimEnd().TrimEnd(';');
+        return $"{trimmed};{DefaultNpgsqlPoolSettings}";
     }
 
     private static IServiceCollection AddCaching(

@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using TodoPlatform.Application.Todos.Specifications;
 using TodoPlatform.Domain.Entities;
-using TodoPlatform.Domain.Enums;
 using TodoPlatform.Infrastructure.Persistence;
 
 namespace TodoPlatform.Infrastructure.Tests.Persistence;
@@ -31,7 +30,7 @@ public sealed class TodoListSpecificationTests
     }
 
     [Fact]
-    public void Create_WithPaging_ReturnsRequestedSlice()
+    public void Create_WithPaging_ReturnsStableOrderedSlice()
     {
         var userId = Guid.NewGuid();
         using var db = CreateDatabase();
@@ -47,12 +46,51 @@ public sealed class TodoListSpecificationTests
             .ToList();
 
         Assert.Equal(2, result.Count);
-        Assert.Equal("Todo 1", result[0].Title);
-        Assert.Equal("Todo 2", result[1].Title);
+        Assert.All(result, t => Assert.Equal(userId, t.UserId));
+        Assert.True(result[0].Id.CompareTo(result[1].Id) < 0);
+
+        // Same query twice → same page (stable ORDER BY Id).
+        var again = evaluator
+            .GetQuery(
+                db.Todos.AsNoTracking().AsQueryable(),
+                TodoListSpecification.Create(userId, skip: 1, take: 2))
+            .Select(t => t.Id)
+            .ToList();
+
+        Assert.Equal(result.Select(t => t.Id).ToList(), again);
     }
 
     [Fact]
-    public void Create_ActiveOnlyAndPaging_CombinesFilters()
+    public void Create_AlwaysOrdersById()
+    {
+        var spec = TodoListSpecification.Create(Guid.NewGuid());
+        Assert.True(spec.OrderById);
+    }
+
+    [Fact]
+    public void Evaluator_OrderById_SortsEntireUserList()
+    {
+        var userId = Guid.NewGuid();
+        using var db = CreateDatabase();
+        for (var i = 0; i < 5; i++)
+            db.Todos.Add(Todo.Create($"Todo {i}", userId));
+        db.SaveChanges();
+
+        var evaluator = new SpecificationEvaluator();
+        var result = evaluator
+            .GetQuery(
+                db.Todos.AsNoTracking().AsQueryable(),
+                TodoListSpecification.Create(userId))
+            .ToList();
+
+        Assert.Equal(5, result.Count);
+        Assert.Equal(
+            result.OrderBy(t => t.Id).Select(t => t.Id).ToList(),
+            result.Select(t => t.Id).ToList());
+    }
+
+    [Fact]
+    public void Create_ActiveOnlyAndPaging_ExcludesCompletedAndPages()
     {
         var userId = Guid.NewGuid();
         using var db = CreateDatabase();
@@ -71,7 +109,8 @@ public sealed class TodoListSpecificationTests
             .ToList();
 
         Assert.Single(result);
-        Assert.Equal("C", result[0].Title);
+        Assert.False(result[0].Completed);
+        Assert.Equal(userId, result[0].UserId);
     }
 
     private static AppDbContext CreateDatabase()

@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
+using TodoPlatform.Application.Dtos;
 using TodoPlatform.Application.Interfaces;
 using TodoPlatform.Domain.Entities;
+using TodoPlatform.Domain.Enums;
 using TodoPlatform.Domain.Specifications;
 using TodoPlatform.Infrastructure.Persistence;
 
@@ -12,13 +14,34 @@ public sealed class TodoRepository(AppDbContext db, ISpecificationEvaluator eval
         Specification<Todo> specification,
         CancellationToken cancellationToken = default)
     {
-        var query = db.Todos.AsQueryable();
-
-        if (specification.AsNoTracking)
-            query = query.AsNoTracking();
-
-        query = evaluator.GetQuery(query, specification);
+        var query = ApplySpecification(db.Todos.AsQueryable(), specification);
         return await query.ToListAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<TodoDto>> ListDtosAsync(
+        Specification<Todo> specification,
+        CancellationToken cancellationToken = default)
+    {
+        // No Include(User) — TodoDto only needs UserId (B-09.4 / B-09.5).
+        var query = ApplySpecification(db.Todos.AsQueryable(), specification);
+
+        return await query
+            .Select(t => new TodoDto(
+                t.Id,
+                t.Title,
+                t.Completed,
+                t.UserId,
+                t.Status == TodoStatus.Todo
+                    ? "todo"
+                    : t.Status == TodoStatus.InProgress
+                        ? "in_progress"
+                        : "done",
+                t.Priority == TodoPriority.Low
+                    ? "low"
+                    : t.Priority == TodoPriority.High
+                        ? "high"
+                        : "medium"))
+            .ToListAsync(cancellationToken);
     }
 
     public Task<Todo?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
@@ -45,5 +68,16 @@ public sealed class TodoRepository(AppDbContext db, ISpecificationEvaluator eval
         todo.MarkDeleted();
         db.Todos.Remove(todo);
         return true;
+    }
+
+    private IQueryable<Todo> ApplySpecification(
+        IQueryable<Todo> source,
+        Specification<Todo> specification)
+    {
+        var query = source;
+        if (specification.AsNoTracking)
+            query = query.AsNoTracking();
+
+        return evaluator.GetQuery(query, specification);
     }
 }

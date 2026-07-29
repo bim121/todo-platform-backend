@@ -18,6 +18,9 @@ public abstract class Specification<T> where T : class
 
     public bool AsNoTracking { get; protected set; } = true;
 
+    /// <summary>When true, infrastructure applies <c>ORDER BY Id</c> (stable paging, B-09.4).</summary>
+    public bool OrderById { get; protected set; }
+
     protected void AddInclude(Expression<Func<T, object>> includeExpression) =>
         Includes.Add(includeExpression);
 
@@ -62,6 +65,7 @@ internal sealed class AndSpecification<T> : Specification<T> where T : class
         Skip = left.Skip ?? right.Skip;
         Take = left.Take ?? right.Take;
         AsNoTracking = left.AsNoTracking && right.AsNoTracking;
+        OrderById = left.OrderById || right.OrderById;
     }
 
     private static Expression CombineCriteria(

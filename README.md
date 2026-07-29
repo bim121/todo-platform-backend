@@ -80,6 +80,7 @@ tests/
 
 - [Docker Compose (B-08)](./docs/docker/compose-dev.md)
 - [GetTodos EXPLAIN / indexes (B-09)](./docs/db/explain-get-todos.md)
+- [Connection pooling (B-09.6)](./docs/db/connection-pooling.md)
 - [Keycloak dev](./docs/auth/keycloak-dev.md)
 - [RabbitMQ / messaging](./docs/messaging/rabbitmq-dev.md)
 - [Architecture Decision Records](./docs/adr/)

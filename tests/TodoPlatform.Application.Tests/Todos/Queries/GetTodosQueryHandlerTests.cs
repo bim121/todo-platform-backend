@@ -1,11 +1,10 @@
 using Moq;
+using TodoPlatform.Application.Dtos;
 using TodoPlatform.Application.Interfaces;
 using TodoPlatform.Application.Services;
 using TodoPlatform.Application.Tests.Support;
 using TodoPlatform.Application.Todos.Queries.GetTodos;
 using TodoPlatform.Application.Todos.Specifications;
-using TodoPlatform.Domain.Entities;
-using TodoPlatform.Domain.Enums;
 using TodoPlatform.Domain.Specifications;
 
 namespace TodoPlatform.Application.Tests.Todos.Queries;
@@ -16,16 +15,16 @@ public sealed class GetTodosQueryHandlerTests
     public async Task Handle_ReturnsMappedTodosForUser()
     {
         var userId = Guid.NewGuid();
-        var todos = new List<Todo>
+        var dtos = new List<TodoDto>
         {
-            Todo.Create("First", userId, TodoStatus.Todo, TodoPriority.Low),
-            Todo.Create("Second", userId, TodoStatus.InProgress, TodoPriority.High)
+            new(Guid.NewGuid(), "First", false, userId, "todo", "low"),
+            new(Guid.NewGuid(), "Second", false, userId, "in_progress", "high")
         };
 
         var repository = new Mock<ITodoRepository>();
         repository
-            .Setup(r => r.ListAsync(It.IsAny<Specification<Todo>>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(todos);
+            .Setup(r => r.ListDtosAsync(It.IsAny<Specification<TodoPlatform.Domain.Entities.Todo>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(dtos);
 
         var currentUser = new Mock<ICurrentUserService>();
         currentUser.Setup(c => c.UserId).Returns(userId);
@@ -41,22 +40,25 @@ public sealed class GetTodosQueryHandlerTests
         Assert.Equal(1, cache.GetOrSetCalls);
 
         repository.Verify(
-            r => r.ListAsync(
-                It.Is<Specification<Todo>>(s => s is TodoByUserSpecification),
+            r => r.ListDtosAsync(
+                It.IsAny<Specification<TodoPlatform.Domain.Entities.Todo>>(),
                 It.IsAny<CancellationToken>()),
             Times.Once);
+        repository.Verify(
+            r => r.ListAsync(It.IsAny<Specification<TodoPlatform.Domain.Entities.Todo>>(), It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 
     [Fact]
     public async Task Handle_ActiveOnly_UsesCombinedSpecification()
     {
         var userId = Guid.NewGuid();
-        Specification<Todo>? captured = null;
+        Specification<TodoPlatform.Domain.Entities.Todo>? captured = null;
 
         var repository = new Mock<ITodoRepository>();
         repository
-            .Setup(r => r.ListAsync(It.IsAny<Specification<Todo>>(), It.IsAny<CancellationToken>()))
-            .Callback<Specification<Todo>, CancellationToken>((spec, _) => captured = spec)
+            .Setup(r => r.ListDtosAsync(It.IsAny<Specification<TodoPlatform.Domain.Entities.Todo>>(), It.IsAny<CancellationToken>()))
+            .Callback<Specification<TodoPlatform.Domain.Entities.Todo>, CancellationToken>((spec, _) => captured = spec)
             .ReturnsAsync([]);
 
         var currentUser = new Mock<ICurrentUserService>();
@@ -76,12 +78,12 @@ public sealed class GetTodosQueryHandlerTests
     public async Task Handle_WithPaging_UsesCombinedSpecification()
     {
         var userId = Guid.NewGuid();
-        Specification<Todo>? captured = null;
+        Specification<TodoPlatform.Domain.Entities.Todo>? captured = null;
 
         var repository = new Mock<ITodoRepository>();
         repository
-            .Setup(r => r.ListAsync(It.IsAny<Specification<Todo>>(), It.IsAny<CancellationToken>()))
-            .Callback<Specification<Todo>, CancellationToken>((spec, _) => captured = spec)
+            .Setup(r => r.ListDtosAsync(It.IsAny<Specification<TodoPlatform.Domain.Entities.Todo>>(), It.IsAny<CancellationToken>()))
+            .Callback<Specification<TodoPlatform.Domain.Entities.Todo>, CancellationToken>((spec, _) => captured = spec)
             .ReturnsAsync([]);
 
         var currentUser = new Mock<ICurrentUserService>();
@@ -96,5 +98,6 @@ public sealed class GetTodosQueryHandlerTests
         Assert.NotNull(captured);
         Assert.Equal(2, captured!.Skip);
         Assert.Equal(5, captured.Take);
+        Assert.True(captured.OrderById);
     }
 }

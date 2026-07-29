@@ -117,4 +117,16 @@ public class TodosEndpointTests : IClassFixture<TodoPlatformWebApplicationFactor
         Assert.True(todos.Count >= 3);
         Assert.All(todos, todo => Assert.Equal(_userId, todo.UserId));
     }
+
+    [Fact]
+    public async Task GetTodos_100Parallel_AllSucceed()
+    {
+        var tasks = Enumerable.Range(0, 100)
+            .Select(_ => _client.GetAsync($"/api/todos?userId={_userId}"))
+            .ToArray();
+
+        var responses = await Task.WhenAll(tasks);
+
+        Assert.All(responses, r => Assert.Equal(HttpStatusCode.OK, r.StatusCode));
+    }
 }

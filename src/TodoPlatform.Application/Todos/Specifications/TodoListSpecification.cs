@@ -16,6 +16,9 @@ public static class TodoListSpecification
         if (activeOnly)
             spec = spec & new ActiveTodosSpecification();
 
+        // Always order by Id so pagination is deterministic (B-09.4).
+        spec = spec & new TodoOrderByIdSpecification();
+
         if (skip is > 0 || take is > 0)
             spec = spec & new TodoPagingSpecification(skip ?? 0, take);
 

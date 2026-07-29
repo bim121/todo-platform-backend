@@ -1,3 +1,4 @@
+using TodoPlatform.Application.Dtos;
 using TodoPlatform.Domain.Entities;
 using TodoPlatform.Domain.Specifications;
 
@@ -11,6 +12,13 @@ public interface ITodoRepository
 {
     /// <summary>B-04: list via <see cref="Specification{T}"/> (e.g. <c>TodoByUserSpecification</c>).</summary>
     Task<IReadOnlyList<Todo>> ListAsync(
+        Specification<Todo> specification,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// B-09.4: project to <see cref="TodoDto"/> in SQL (no full entity materialization, no Include).
+    /// </summary>
+    Task<IReadOnlyList<TodoDto>> ListDtosAsync(
         Specification<Todo> specification,
         CancellationToken cancellationToken = default);
 
