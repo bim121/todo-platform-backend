@@ -119,6 +119,20 @@ public class TodosEndpointTests : IClassFixture<TodoPlatformWebApplicationFactor
     }
 
     [Fact]
+    public async Task GetTodoStats_ReturnsAggregatesForUser()
+    {
+        var response = await _client.GetAsync($"/api/todos/stats?userId={_userId}");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var stats = await response.Content.ReadFromJsonAsync<TodoStatsDto>();
+        Assert.NotNull(stats);
+        Assert.Equal(_userId, stats.UserId);
+        Assert.True(stats.Total >= 3);
+        Assert.Equal(stats.Active + stats.Completed, stats.Total);
+    }
+
+    [Fact]
     public async Task GetTodos_100Parallel_AllSucceed()
     {
         var tasks = Enumerable.Range(0, 100)

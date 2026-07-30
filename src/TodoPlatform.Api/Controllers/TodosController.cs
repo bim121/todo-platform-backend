@@ -7,6 +7,7 @@ using TodoPlatform.Application.Todos.Commands.DeleteTodo;
 using TodoPlatform.Application.Todos.Commands.UpdateTodo;
 using TodoPlatform.Application.Todos.Queries.GetTodoById;
 using TodoPlatform.Application.Todos.Queries.GetTodos;
+using TodoPlatform.Application.Todos.Queries.GetTodoStats;
 
 namespace TodoPlatform.Api.Controllers;
 
@@ -42,6 +43,23 @@ public class TodosController(IMediator mediator) : ControllerBase
             new GetTodosQuery(userId, activeOnly, skip, take),
             cancellationToken);
         return Ok(todos);
+    }
+
+    /// <summary>
+    /// Aggregated todo counts for a user (total / active / completed). Dapper read model.
+    /// </summary>
+    /// <param name="userId">Owner user id. When omitted, uses the authenticated user.</param>
+    /// <param name="cancellationToken">Request cancellation token.</param>
+    [HttpGet("stats")]
+    [ProducesResponseType(typeof(TodoStatsDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<TodoStatsDto>> GetStats(
+        [FromQuery] Guid? userId = null,
+        CancellationToken cancellationToken = default)
+    {
+        var stats = await mediator.Send(new GetTodoStatsQuery(userId), cancellationToken);
+        return Ok(stats);
     }
 
     /// <summary>

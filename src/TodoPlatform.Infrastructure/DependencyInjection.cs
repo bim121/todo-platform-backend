@@ -39,12 +39,18 @@ public static class DependencyInjection
                 options.UseInMemoryDatabase(databaseName);
                 options.AddInterceptors(sp.GetRequiredService<SlowQueryInterceptor>());
             });
+
+            // No SQL view / Npgsql in tests — EF aggregate mimics the read model.
+            services.AddScoped<ITodoStatsReadStore, EfTodoStatsReadStore>();
         }
         else
         {
             var connectionString = EnsurePoolSettings(
                 configuration.GetConnectionString("Default")
                 ?? throw new InvalidOperationException("Connection string 'Default' is not configured."));
+
+            var readConnectionString = EnsurePoolSettings(
+                configuration.GetConnectionString("Read") ?? connectionString);
 
             services.AddDbContext<AppDbContext>((sp, options) =>
             {
@@ -61,6 +67,10 @@ public static class DependencyInjection
             });
 
             services.AddFluentMigrator(connectionString);
+
+            // B-10.1 — separate read connection (same DB until a replica is introduced).
+            services.AddSingleton<IReadDbConnection>(_ => new DapperReadDbConnection(readConnectionString));
+            services.AddScoped<ITodoStatsReadStore, DapperTodoStatsReadStore>();
         }
 
         services.AddScoped<DbSeeder>();
