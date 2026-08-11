@@ -15,7 +15,7 @@
 - [x] `IReadDbConnection` — separate read connection string (same DB for now)
 - [x] SQL view `v_todo_stats_by_user` — count total/active/completed
 - [x] `GetTodoStatsQuery` + handler via Dapper
-- [ ] `GetTodosWithFiltersQuery` — dynamic SQL (status, priority, date range)
+- [x] `GetTodosWithFiltersQuery` — dynamic SQL (status, priority, date range)
 - [x] Raw SQL file `Infrastructure/Persistence/Sql/todo-stats.sql`
 - [x] Endpoint `GET /api/todos/stats` in OpenAPI
 - [ ] No EF for read handlers in this phase — clear folder `Application/ReadModels/`

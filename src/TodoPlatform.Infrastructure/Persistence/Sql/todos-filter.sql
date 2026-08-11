@@ -1,0 +1,21 @@
+-- B-10.4 — filtered todo list (COUNT + page).
+-- Predicates are appended by TodoFilterSqlBuilder (whitelisted columns only).
+-- Placeholders shown for documentation; runtime SQL is built in C#.
+
+-- COUNT
+-- SELECT COUNT(*)::int FROM todos
+-- WHERE "UserId" = @UserId
+--   [AND "Status" = @Status]
+--   [AND "Priority" = @Priority]
+--   [AND "Completed" = @Completed]
+--   [AND "Title" ILIKE @Search ESCAPE '\'];
+
+-- PAGE
+-- SELECT "Id", "Title", "Completed", "UserId",
+--        CASE "Status" WHEN 'Todo' THEN 'todo' WHEN 'InProgress' THEN 'in_progress' WHEN 'Done' THEN 'done' END AS "Status",
+--        CASE "Priority" WHEN 'Low' THEN 'low' WHEN 'Medium' THEN 'medium' WHEN 'High' THEN 'high' END AS "Priority"
+-- FROM todos
+-- WHERE "UserId" = @UserId
+--   [...same optional predicates...]
+-- ORDER BY "Id"
+-- OFFSET @Skip ROWS FETCH NEXT @Take ROWS ONLY;

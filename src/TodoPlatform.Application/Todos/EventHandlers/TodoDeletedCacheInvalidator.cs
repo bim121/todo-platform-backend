@@ -17,6 +17,7 @@ public sealed class TodoDeletedCacheInvalidator(
         await cache.RemoveByPrefixAsync(
             CacheKeys.TodosByUserPrefix(notification.UserId),
             cancellationToken);
+        await cache.RemoveAsync(CacheKeys.TodoStatsByUser(notification.UserId), cancellationToken);
 
         logger.LogDebug(
             "Invalidated cache after delete todo {TodoId} user {UserId}",

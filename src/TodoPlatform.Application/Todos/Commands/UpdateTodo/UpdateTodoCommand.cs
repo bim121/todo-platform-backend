@@ -31,6 +31,7 @@ public sealed class UpdateTodoHandler(
             await cache.RemoveByPrefixAsync(
                 CacheKeys.TodosByUserPrefix(todo.UserId),
                 cancellationToken);
+            await cache.RemoveAsync(CacheKeys.TodoStatsByUser(todo.UserId), cancellationToken);
 
             return TodoDto.FromEntity(todo);
         }

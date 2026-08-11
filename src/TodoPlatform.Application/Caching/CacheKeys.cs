@@ -13,4 +13,7 @@ public static class CacheKeys
     public static string TodosByUserPrefix(Guid userId) => $"todos:user:{userId}";
 
     public static string TodoById(Guid todoId) => $"todo:{todoId}";
+
+    /// <summary>B-10.6 — per-user todo aggregates (1 min TTL).</summary>
+    public static string TodoStatsByUser(Guid userId) => $"stats:user:{userId}";
 }

@@ -23,4 +23,5 @@ public static class CacheTtl
     public static readonly TimeSpan TodosList = TimeSpan.FromMinutes(5);
     public static readonly TimeSpan TodosListEmpty = TimeSpan.FromSeconds(30);
     public static readonly TimeSpan TodoById = TimeSpan.FromMinutes(10);
+    public static readonly TimeSpan TodoStats = TimeSpan.FromMinutes(1);
 }

@@ -8,6 +8,7 @@ using TodoPlatform.Application.Todos.Commands.UpdateTodo;
 using TodoPlatform.Application.Todos.Queries.GetTodoById;
 using TodoPlatform.Application.Todos.Queries.GetTodos;
 using TodoPlatform.Application.Todos.Queries.GetTodoStats;
+using TodoPlatform.Application.Todos.Queries.GetTodosWithFilters;
 
 namespace TodoPlatform.Api.Controllers;
 
@@ -60,6 +61,29 @@ public class TodosController(IMediator mediator) : ControllerBase
     {
         var stats = await mediator.Send(new GetTodoStatsQuery(userId), cancellationToken);
         return Ok(stats);
+    }
+
+    /// <summary>
+    /// Filtered + paginated todo search (Dapper read model). Prep for full-text (B-15).
+    /// </summary>
+    [HttpGet("search")]
+    [ProducesResponseType(typeof(PagedResult<TodoListItemDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<PagedResult<TodoListItemDto>>> Search(
+        [FromQuery] Guid? userId = null,
+        [FromQuery] string? status = null,
+        [FromQuery] string? priority = null,
+        [FromQuery] bool? completed = null,
+        [FromQuery] string? search = null,
+        [FromQuery] int skip = 0,
+        [FromQuery] int take = 20,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await mediator.Send(
+            new GetTodosWithFiltersQuery(userId, status, priority, completed, search, skip, take),
+            cancellationToken);
+        return Ok(result);
     }
 
     /// <summary>

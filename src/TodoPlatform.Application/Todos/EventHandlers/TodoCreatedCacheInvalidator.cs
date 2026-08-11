@@ -16,6 +16,7 @@ public sealed class TodoCreatedCacheInvalidator(
         await cache.RemoveByPrefixAsync(
             CacheKeys.TodosByUserPrefix(notification.UserId),
             cancellationToken);
+        await cache.RemoveAsync(CacheKeys.TodoStatsByUser(notification.UserId), cancellationToken);
 
         logger.LogDebug(
             "Invalidated todos list cache for user {UserId} after create {TodoId}",

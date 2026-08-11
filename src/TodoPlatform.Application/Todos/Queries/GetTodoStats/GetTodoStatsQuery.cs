@@ -1,4 +1,5 @@
 using MediatR;
+using TodoPlatform.Application.Caching;
 using TodoPlatform.Application.Dtos;
 using TodoPlatform.Application.Exceptions;
 using TodoPlatform.Application.Interfaces;
@@ -10,7 +11,8 @@ public sealed record GetTodoStatsQuery(Guid? UserId = null) : IRequest<TodoStats
 
 public sealed class GetTodoStatsQueryHandler(
     ITodoStatsReadStore statsStore,
-    ICurrentUserService currentUser)
+    ICurrentUserService currentUser,
+    ICacheService cache)
     : IRequestHandler<GetTodoStatsQuery, TodoStatsDto>
 {
     public async Task<TodoStatsDto> Handle(
@@ -28,6 +30,10 @@ public sealed class GetTodoStatsQueryHandler(
                 });
         }
 
-        return await statsStore.GetByUserIdAsync(userId, cancellationToken);
+        return await cache.GetOrSetAsync(
+            CacheKeys.TodoStatsByUser(userId),
+            ct => statsStore.GetByUserIdAsync(userId, ct),
+            CacheTtl.TodoStats,
+            cancellationToken);
     }
 }

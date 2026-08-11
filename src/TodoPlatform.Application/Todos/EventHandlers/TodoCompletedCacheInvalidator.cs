@@ -24,5 +24,6 @@ public sealed class TodoCompletedCacheInvalidator(
     {
         await cache.RemoveAsync(CacheKeys.TodoById(todoId), cancellationToken);
         await cache.RemoveByPrefixAsync(CacheKeys.TodosByUserPrefix(userId), cancellationToken);
+        await cache.RemoveAsync(CacheKeys.TodoStatsByUser(userId), cancellationToken);
     }
 }

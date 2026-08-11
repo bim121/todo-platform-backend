@@ -133,6 +133,32 @@ public class TodosEndpointTests : IClassFixture<TodoPlatformWebApplicationFactor
     }
 
     [Fact]
+    public async Task SearchTodos_FiltersByPriority_ReturnsPagedResult()
+    {
+        var response = await _client.GetAsync(
+            $"/api/todos/search?userId={_userId}&priority=high&skip=0&take=10");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var page = await response.Content.ReadFromJsonAsync<PagedResult<TodoListItemDto>>();
+        Assert.NotNull(page);
+        Assert.True(page.TotalCount >= 1);
+        Assert.All(page.Items, item => Assert.Equal("high", item.Priority));
+        Assert.Equal(0, page.Skip);
+        Assert.Equal(10, page.Take);
+    }
+
+    [Fact]
+    public async Task SearchTodos_ContradictoryFilters_ReturnsValidationProblemDetails()
+    {
+        var response = await _client.GetAsync(
+            $"/api/todos/search?userId={_userId}&status=done&completed=false");
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
+    }
+
+    [Fact]
     public async Task GetTodos_100Parallel_AllSucceed()
     {
         var tasks = Enumerable.Range(0, 100)

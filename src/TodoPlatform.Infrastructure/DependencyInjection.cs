@@ -42,6 +42,7 @@ public static class DependencyInjection
 
             // No SQL view / Npgsql in tests — EF aggregate mimics the read model.
             services.AddScoped<ITodoStatsReadStore, EfTodoStatsReadStore>();
+            services.AddScoped<ITodoFilterReadStore, EfTodoFilterReadStore>();
         }
         else
         {
@@ -71,6 +72,7 @@ public static class DependencyInjection
             // B-10.1 — separate read connection (same DB until a replica is introduced).
             services.AddSingleton<IReadDbConnection>(_ => new DapperReadDbConnection(readConnectionString));
             services.AddScoped<ITodoStatsReadStore, DapperTodoStatsReadStore>();
+            services.AddScoped<ITodoFilterReadStore, DapperTodoFilterReadStore>();
         }
 
         services.AddScoped<DbSeeder>();

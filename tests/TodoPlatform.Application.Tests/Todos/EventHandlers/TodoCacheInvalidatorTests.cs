@@ -24,6 +24,9 @@ public sealed class TodoCacheInvalidatorTests
         cache.Verify(
             c => c.RemoveByPrefixAsync(CacheKeys.TodosByUserPrefix(userId), It.IsAny<CancellationToken>()),
             Times.Once);
+        cache.Verify(
+            c => c.RemoveAsync(CacheKeys.TodoStatsByUser(userId), It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 
     [Fact]
@@ -42,6 +45,9 @@ public sealed class TodoCacheInvalidatorTests
         cache.Verify(
             c => c.RemoveByPrefixAsync(CacheKeys.TodosByUserPrefix(userId), It.IsAny<CancellationToken>()),
             Times.Once);
+        cache.Verify(
+            c => c.RemoveAsync(CacheKeys.TodoStatsByUser(userId), It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 
     [Fact]
@@ -59,6 +65,9 @@ public sealed class TodoCacheInvalidatorTests
         cache.Verify(c => c.RemoveAsync(CacheKeys.TodoById(todoId), It.IsAny<CancellationToken>()), Times.Once);
         cache.Verify(
             c => c.RemoveByPrefixAsync(CacheKeys.TodosByUserPrefix(userId), It.IsAny<CancellationToken>()),
+            Times.Once);
+        cache.Verify(
+            c => c.RemoveAsync(CacheKeys.TodoStatsByUser(userId), It.IsAny<CancellationToken>()),
             Times.Once);
     }
 }
