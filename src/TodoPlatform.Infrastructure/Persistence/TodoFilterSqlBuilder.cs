@@ -95,6 +95,26 @@ public static class TodoFilterSqlBuilder
         || key.Equals("skip", StringComparison.OrdinalIgnoreCase)
         || key.Equals("take", StringComparison.OrdinalIgnoreCase);
 
+    /// <summary>
+    /// Throws when any key is outside the whitelist — prevents SQL injection via dynamic column names.
+    /// </summary>
+    public static void EnsureOnlyAllowedFilterKeys(IEnumerable<string> keys)
+    {
+        ArgumentNullException.ThrowIfNull(keys);
+
+        var unknown = keys
+            .Where(k => !string.IsNullOrWhiteSpace(k) && !IsAllowedFilterKey(k))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        if (unknown.Length > 0)
+        {
+            throw new ArgumentException(
+                $"Unknown filter key(s): {string.Join(", ", unknown)}. Allowed: status, priority, completed, search, userId, skip, take.",
+                nameof(keys));
+        }
+    }
+
     internal static string EscapeLike(string value) =>
         value
             .Replace("\\", "\\\\", StringComparison.Ordinal)

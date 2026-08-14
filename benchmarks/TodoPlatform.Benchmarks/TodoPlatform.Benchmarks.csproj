@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>TodoPlatform.Benchmarks</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BenchmarkDotNet" Version="0.15.2" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.8" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.2" />
+    <PackageReference Include="Testcontainers.PostgreSql" Version="4.3.0" />
+    <PackageReference Include="FluentMigrator.Runner" Version="8.0.1" />
+    <PackageReference Include="FluentMigrator.Runner.Postgres" Version="8.0.1" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.8" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\TodoPlatform.Infrastructure\TodoPlatform.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\TodoPlatform.Application\TodoPlatform.Application.csproj" />
+    <ProjectReference Include="..\..\src\TodoPlatform.Domain\TodoPlatform.Domain.csproj" />
+  </ItemGroup>
+
+</Project>

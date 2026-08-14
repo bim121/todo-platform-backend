@@ -62,4 +62,21 @@ public sealed class TodoFilterSqlBuilderTests
         Assert.DoesNotContain("@Search", built.CountSql, StringComparison.Ordinal);
         Assert.Contains("""WHERE "UserId" = @UserId""", built.CountSql, StringComparison.Ordinal);
     }
+
+    [Fact]
+    public void EnsureOnlyAllowedFilterKeys_ThrowsOnUnknown()
+    {
+        var ex = Assert.Throws<ArgumentException>(() =>
+            TodoFilterSqlBuilder.EnsureOnlyAllowedFilterKeys(["status", "Title", "drop table"]));
+
+        Assert.Contains("Title", ex.Message, StringComparison.Ordinal);
+        Assert.Contains("drop table", ex.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void EnsureOnlyAllowedFilterKeys_AllowsWhitelist()
+    {
+        TodoFilterSqlBuilder.EnsureOnlyAllowedFilterKeys(
+            ["status", "priority", "completed", "search", "userId", "skip", "take"]);
+    }
 }

@@ -26,6 +26,10 @@
 - [ ] GraphQL auth: `@Authorize`, JWT + `X-Tenant-Id` в context
 - [ ] DataLoader demo для N+1 (todo → user)
 - [ ] ADR-010: REST vs GraphQL в этом проекте
+- [x] `GetSystemStatsQuery` + admin endpoint (B-10.7)
+- [x] Testcontainers Postgres integration + SqlBuilder whitelist tests (B-10.8)
+- [x] BenchmarkDotNet project EF vs Dapper stats (B-10.8)
+- [x] ADR-025: EF write / Dapper read split
 
 ---
 
