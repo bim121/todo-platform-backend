@@ -7,6 +7,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Npgsql;
 using Testcontainers.PostgreSql;
 using TodoPlatform.Application.Interfaces;
+using TodoPlatform.Application.Tenancy;
+using TodoPlatform.Domain.Tenancy;
 using TodoPlatform.Infrastructure.Migrations;
 using TodoPlatform.Infrastructure.Persistence;
 
@@ -58,17 +60,17 @@ public class TodoStatsBenchmarks
             await conn.OpenAsync();
             await conn.ExecuteAsync(
                 """
-                INSERT INTO users ("Id", "Email", "PasswordHash", "Name")
-                VALUES (@Id, 'bench@example.com', 'x', 'Bench');
+                INSERT INTO users ("Id", "Email", "PasswordHash", "Name", "TenantId")
+                VALUES (@Id, 'bench@example.com', 'x', 'Bench', @TenantId);
                 """,
-                new { Id = _userId });
+                new { Id = _userId, TenantId = WellKnownTenants.DefaultId });
 
             for (var i = 0; i < 200; i++)
             {
                 await conn.ExecuteAsync(
                     """
-                    INSERT INTO todos ("Id", "Title", "Completed", "UserId", "Status", "Priority")
-                    VALUES (@Id, @Title, @Completed, @UserId, @Status, 'Medium');
+                    INSERT INTO todos ("Id", "Title", "Completed", "UserId", "Status", "Priority", "TenantId")
+                    VALUES (@Id, @Title, @Completed, @UserId, @Status, 'Medium', @TenantId);
                     """,
                     new
                     {
@@ -76,12 +78,15 @@ public class TodoStatsBenchmarks
                         Title = $"Todo {i}",
                         Completed = i % 3 == 0,
                         UserId = _userId,
-                        Status = i % 3 == 0 ? "Done" : "Todo"
+                        Status = i % 3 == 0 ? "Done" : "Todo",
+                        TenantId = WellKnownTenants.DefaultId
                     });
             }
         }
 
-        _dapper = new DapperTodoStatsReadStore(new DapperReadDbConnection(_connectionString));
+        var tenantContext = new TenantContext();
+        tenantContext.Set(WellKnownTenants.DefaultId, WellKnownTenants.DefaultSlug);
+        _dapper = new DapperTodoStatsReadStore(new DapperReadDbConnection(_connectionString, tenantContext));
         _db = new AppDbContext(new DbContextOptionsBuilder<AppDbContext>()
             .UseNpgsql(_connectionString)
             .Options);

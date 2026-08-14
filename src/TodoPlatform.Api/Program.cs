@@ -2,6 +2,7 @@ using Serilog;
 using TodoPlatform.Api.Auth;
 using TodoPlatform.Api.Exceptions;
 using TodoPlatform.Api.Extensions;
+using TodoPlatform.Api.Middleware;
 using TodoPlatform.Api.Swagger;
 using TodoPlatform.Api.Versioning;
 using TodoPlatform.Application;
@@ -60,6 +61,8 @@ if (app.Environment.IsDevelopment())
 app.UseRouting();
 app.UseCors("Frontend");
 app.UseAuthentication();
+// After auth (JWT tenant_id claim) and before user sync so RLS SET applies to users lookup.
+app.UseMiddleware<TenantResolutionMiddleware>();
 app.UseCurrentUserSync();
 app.UseMiddleware<AuthorizationProblemDetailsMiddleware>();
 app.UseAuthorization();

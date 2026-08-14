@@ -2,11 +2,13 @@ using TodoPlatform.Application.Caching;
 using TodoPlatform.Application.Diagnostics;
 using TodoPlatform.Application.Interfaces;
 using TodoPlatform.Application.Services;
+using TodoPlatform.Application.Tenancy;
 using TodoPlatform.Infrastructure.Caching;
 using TodoPlatform.Infrastructure.Migrations;
 using TodoPlatform.Infrastructure.Persistence;
 using TodoPlatform.Infrastructure.Repositories;
 using TodoPlatform.Infrastructure.Security;
+using TodoPlatform.Infrastructure.Tenancy;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -28,6 +30,9 @@ public static class DependencyInjection
     {
         services.AddSingleton<SlowQueryMetrics>();
         services.AddSingleton<SlowQueryInterceptor>();
+        services.AddScoped<ITenantContext, TenantContext>();
+        services.AddScoped<ITenantLookup, EfTenantLookup>();
+        services.AddScoped<TenantDbConnectionInterceptor>();
 
         if (configuration.GetValue("Database:UseInMemory", false))
         {
@@ -57,7 +62,9 @@ public static class DependencyInjection
             services.AddDbContext<AppDbContext>((sp, options) =>
             {
                 options.UseNpgsql(connectionString);
-                options.AddInterceptors(sp.GetRequiredService<SlowQueryInterceptor>());
+                options.AddInterceptors(
+                    sp.GetRequiredService<SlowQueryInterceptor>(),
+                    sp.GetRequiredService<TenantDbConnectionInterceptor>());
 
                 var env = sp.GetService<IHostEnvironment>();
                 if (env?.IsDevelopment() == true)
@@ -71,7 +78,10 @@ public static class DependencyInjection
             services.AddFluentMigrator(connectionString);
 
             // B-10.1 — separate read connection (same DB until a replica is introduced).
-            services.AddSingleton<IReadDbConnection>(_ => new DapperReadDbConnection(readConnectionString));
+            services.AddScoped<IReadDbConnection>(sp =>
+                new DapperReadDbConnection(
+                    readConnectionString,
+                    sp.GetRequiredService<ITenantContext>()));
             services.AddScoped<ITodoStatsReadStore, DapperTodoStatsReadStore>();
             services.AddScoped<ITodoFilterReadStore, DapperTodoFilterReadStore>();
             services.AddScoped<ISystemStatsReadStore, DapperSystemStatsReadStore>();

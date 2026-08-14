@@ -16,8 +16,9 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
             .HasMaxLength(256)
             .IsRequired();
 
-        builder.HasIndex(u => u.Email)
-            .IsUnique();
+        builder.HasIndex(u => new { u.TenantId, u.Email })
+            .IsUnique()
+            .HasDatabaseName("IX_users_TenantId_Email");
 
         builder.Property(u => u.PasswordHash)
             .HasMaxLength(512)
@@ -30,8 +31,14 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(u => u.KeycloakSub)
             .HasMaxLength(64);
 
-        builder.HasIndex(u => u.KeycloakSub)
+        builder.HasIndex(u => new { u.TenantId, u.KeycloakSub })
             .IsUnique()
+            .HasDatabaseName("IX_users_TenantId_KeycloakSub")
             .HasFilter("\"KeycloakSub\" IS NOT NULL");
+
+        builder.HasOne<Tenant>()
+            .WithMany()
+            .HasForeignKey(u => u.TenantId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

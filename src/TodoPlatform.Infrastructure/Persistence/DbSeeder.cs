@@ -1,17 +1,28 @@
 using Microsoft.EntityFrameworkCore;
 using TodoPlatform.Application.Interfaces;
+using TodoPlatform.Application.Tenancy;
 using TodoPlatform.Domain.Entities;
 using TodoPlatform.Domain.Enums;
+using TodoPlatform.Domain.Tenancy;
+using TodoPlatform.Infrastructure.Tenancy;
 
 namespace TodoPlatform.Infrastructure.Persistence;
 
-public sealed class DbSeeder(AppDbContext db, IPasswordHasher passwordHasher)
+public sealed class DbSeeder(
+    AppDbContext db,
+    IPasswordHasher passwordHasher,
+    ITenantContext tenantContext)
 {
     public const string TestEmail = "test@example.com";
     public const string TestPassword = "password123";
 
     public async Task SeedAsync(CancellationToken cancellationToken = default)
     {
+        await EnsureTenantsAsync(cancellationToken);
+
+        tenantContext.Set(WellKnownTenants.DefaultId, WellKnownTenants.DefaultSlug);
+        await ApplyTenantToOpenConnectionAsync(cancellationToken);
+
         var user = await db.Users
             .FirstOrDefaultAsync(u => u.Email == TestEmail, cancellationToken);
 
@@ -20,8 +31,14 @@ public sealed class DbSeeder(AppDbContext db, IPasswordHasher passwordHasher)
             user = User.Register(
                 TestEmail,
                 passwordHasher.Hash(TestPassword),
-                "Test User");
+                "Test User",
+                WellKnownTenants.DefaultId);
             db.Users.Add(user);
+            await db.SaveChangesAsync(cancellationToken);
+        }
+        else if (user.TenantId == Guid.Empty)
+        {
+            user.AssignTenant(WellKnownTenants.DefaultId);
             await db.SaveChangesAsync(cancellationToken);
         }
 
@@ -29,17 +46,40 @@ public sealed class DbSeeder(AppDbContext db, IPasswordHasher passwordHasher)
             return;
 
         db.Todos.AddRange(
-            Todo.Create("Learn NgRx Effects", user.Id),
+            Todo.Create("Learn NgRx Effects", user.Id, tenantId: WellKnownTenants.DefaultId),
             Todo.Create(
                 "Connect Angular to ASP.NET API",
                 user.Id,
                 TodoStatus.InProgress,
-                TodoPriority.High),
+                TodoPriority.High,
+                WellKnownTenants.DefaultId),
             Todo.Create(
                 "Review OpenAPI contract",
                 user.Id,
-                priority: TodoPriority.Low));
+                priority: TodoPriority.Low,
+                tenantId: WellKnownTenants.DefaultId));
 
         await db.SaveChangesAsync(cancellationToken);
+    }
+
+    private async Task EnsureTenantsAsync(CancellationToken cancellationToken)
+    {
+        if (await db.Tenants.AnyAsync(cancellationToken))
+            return;
+
+        db.Tenants.AddRange(
+            Tenant.Create(WellKnownTenants.DefaultSlug, WellKnownTenants.DefaultName, WellKnownTenants.DefaultId),
+            Tenant.Create(WellKnownTenants.AcmeSlug, WellKnownTenants.AcmeName, WellKnownTenants.AcmeId));
+        await db.SaveChangesAsync(cancellationToken);
+    }
+
+    private async Task ApplyTenantToOpenConnectionAsync(CancellationToken cancellationToken)
+    {
+        if (!db.Database.IsRelational())
+            return;
+
+        var connection = db.Database.GetDbConnection();
+        if (connection.State == System.Data.ConnectionState.Open)
+            await TenantSession.ApplyAsync(connection, tenantContext.TenantId, cancellationToken);
     }
 }

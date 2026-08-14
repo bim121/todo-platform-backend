@@ -1,5 +1,6 @@
 using TodoPlatform.Domain.Common;
 using TodoPlatform.Domain.Events;
+using TodoPlatform.Domain.Tenancy;
 
 namespace TodoPlatform.Domain.Entities;
 
@@ -11,12 +12,13 @@ public class User : Entity
     public string PasswordHash { get; private set; } = string.Empty;
     public string Name { get; private set; } = string.Empty;
     public string? KeycloakSub { get; private set; }
+    public Guid TenantId { get; private set; }
 
     private User()
     {
     }
 
-    public static User Register(string email, string passwordHash, string name)
+    public static User Register(string email, string passwordHash, string name, Guid? tenantId = null)
     {
         if (string.IsNullOrWhiteSpace(email))
             throw new ArgumentException("Email is required.", nameof(email));
@@ -31,11 +33,12 @@ public class User : Entity
         {
             Email = email.Trim().ToLowerInvariant(),
             PasswordHash = passwordHash,
-            Name = name.Trim()
+            Name = name.Trim(),
+            TenantId = ResolveTenantId(tenantId)
         };
     }
 
-    public static User CreateFromKeycloak(string keycloakSub, string email, string name)
+    public static User CreateFromKeycloak(string keycloakSub, string email, string name, Guid? tenantId = null)
     {
         if (string.IsNullOrWhiteSpace(keycloakSub))
             throw new ArgumentException("Keycloak subject is required.", nameof(keycloakSub));
@@ -46,6 +49,7 @@ public class User : Entity
             PasswordHash = ExternalPasswordPlaceholder,
             Name = name.Trim(),
             KeycloakSub = keycloakSub.Trim(),
+            TenantId = ResolveTenantId(tenantId)
         };
 
         user.RaiseDomainEvent(new UserRegisteredEvent(user.Id, user.Email, user.KeycloakSub));
@@ -62,4 +66,15 @@ public class User : Entity
 
         KeycloakSub = keycloakSub.Trim();
     }
+
+    public void AssignTenant(Guid tenantId)
+    {
+        if (tenantId == Guid.Empty)
+            throw new ArgumentException("Tenant id is required.", nameof(tenantId));
+
+        TenantId = tenantId;
+    }
+
+    private static Guid ResolveTenantId(Guid? tenantId) =>
+        tenantId is { } id && id != Guid.Empty ? id : WellKnownTenants.DefaultId;
 }

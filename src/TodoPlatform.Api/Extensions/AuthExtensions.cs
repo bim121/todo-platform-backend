@@ -132,6 +132,7 @@ public sealed class TestAuthHandler(
     public const string UserEmailHeader = "X-Test-User-Email";
     public const string UserRolesHeader = "X-Test-User-Roles";
     public const string UserSubHeader = "X-Test-User-Sub";
+    public const string TenantClaimHeader = "X-Test-Tenant-Claim";
     public const string DefaultTestSub = "11111111-1111-1111-1111-111111111111";
 
     protected override Task<AuthenticateResult> HandleAuthenticateAsync()
@@ -148,6 +149,7 @@ public sealed class TestAuthHandler(
         var sub = Request.Headers[UserSubHeader].FirstOrDefault() ?? DefaultTestSub;
         var roles = Request.Headers[UserRolesHeader].FirstOrDefault()?.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
             ?? ["user"];
+        var tenantClaim = Request.Headers[TenantClaimHeader].FirstOrDefault();
 
         var claims = new List<Claim>
         {
@@ -158,6 +160,9 @@ public sealed class TestAuthHandler(
             new(ClaimTypes.Name, "Test User"),
             new("name", "Test User"),
         };
+
+        if (!string.IsNullOrWhiteSpace(tenantClaim))
+            claims.Add(new Claim("tenant_id", tenantClaim));
 
         claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
 

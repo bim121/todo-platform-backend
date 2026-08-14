@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using TodoPlatform.Application.Tenancy;
 
 namespace TodoPlatform.Infrastructure.Persistence;
 
@@ -26,6 +27,11 @@ public static class DatabaseInitializer
         {
             runner.MigrateUp();
             logger.LogInformation("FluentMigrator: database migrations applied.");
+
+            var tenantContext = scope.ServiceProvider.GetRequiredService<ITenantContext>();
+            tenantContext.Set(
+                Domain.Tenancy.WellKnownTenants.DefaultId,
+                Domain.Tenancy.WellKnownTenants.DefaultSlug);
 
             var seeder = scope.ServiceProvider.GetRequiredService<DbSeeder>();
             await seeder.SeedAsync();

@@ -30,6 +30,7 @@ public class TodoConfiguration : IEntityTypeConfiguration<Todo>
         builder.HasIndex(t => t.Completed);
         builder.HasIndex(t => t.Status);
         builder.HasIndex(t => new { t.UserId, t.Completed });
+        builder.HasIndex(t => t.TenantId);
 
         // B-09.3 — matches GetTodos ActiveOnly (Completed = false)
         builder.HasIndex(t => t.UserId)
@@ -40,5 +41,10 @@ public class TodoConfiguration : IEntityTypeConfiguration<Todo>
             .WithMany()
             .HasForeignKey(t => t.UserId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasOne<Tenant>()
+            .WithMany()
+            .HasForeignKey(t => t.TenantId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

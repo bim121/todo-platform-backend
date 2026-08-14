@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Npgsql;
 using Testcontainers.PostgreSql;
 using TodoPlatform.Application.Interfaces;
+using TodoPlatform.Domain.Tenancy;
 using TodoPlatform.Infrastructure.Migrations;
 using TodoPlatform.Infrastructure.Persistence;
 using TodoPlatform.Infrastructure.Tests.Support;
@@ -61,7 +62,9 @@ public sealed class DapperPostgresIntegrationTests : IAsyncLifetime
             await SeedUsersAndTodosAsync(conn, userA, userB);
         }
 
-        IReadDbConnection readDb = new DapperReadDbConnection(_connectionString);
+        IReadDbConnection readDb = new DapperReadDbConnection(
+            _connectionString,
+            new StaticTenantContext(WellKnownTenants.DefaultId));
         var todoStats = new DapperTodoStatsReadStore(readDb);
         var systemStats = new DapperSystemStatsReadStore(readDb);
 
@@ -86,27 +89,28 @@ public sealed class DapperPostgresIntegrationTests : IAsyncLifetime
     {
         await conn.ExecuteAsync(
             """
-            INSERT INTO users ("Id", "Email", "PasswordHash", "Name", "KeycloakSub")
+            INSERT INTO users ("Id", "Email", "PasswordHash", "Name", "KeycloakSub", "TenantId")
             VALUES
-              (@A, 'a@example.com', 'x', 'A', NULL),
-              (@B, 'b@example.com', 'x', 'B', NULL);
+              (@A, 'a@example.com', 'x', 'A', NULL, @TenantId),
+              (@B, 'b@example.com', 'x', 'B', NULL, @TenantId);
             """,
-            new { A = userA, B = userB });
+            new { A = userA, B = userB, TenantId = WellKnownTenants.DefaultId });
 
         // userA: 2 active + 1 completed; userB: 1 active
         await conn.ExecuteAsync(
             """
-            INSERT INTO todos ("Id", "Title", "Completed", "UserId", "Status", "Priority")
+            INSERT INTO todos ("Id", "Title", "Completed", "UserId", "Status", "Priority", "TenantId")
             VALUES
-              (@Id1, 'A1', false, @A, 'Todo', 'Medium'),
-              (@Id2, 'A2', false, @A, 'InProgress', 'High'),
-              (@Id3, 'A3', true,  @A, 'Done', 'Low'),
-              (@Id4, 'B1', false, @B, 'Todo', 'Medium');
+              (@Id1, 'A1', false, @A, 'Todo', 'Medium', @TenantId),
+              (@Id2, 'A2', false, @A, 'InProgress', 'High', @TenantId),
+              (@Id3, 'A3', true,  @A, 'Done', 'Low', @TenantId),
+              (@Id4, 'B1', false, @B, 'Todo', 'Medium', @TenantId);
             """,
             new
             {
                 A = userA,
                 B = userB,
+                TenantId = WellKnownTenants.DefaultId,
                 Id1 = Guid.NewGuid(),
                 Id2 = Guid.NewGuid(),
                 Id3 = Guid.NewGuid(),

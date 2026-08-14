@@ -10,14 +10,14 @@
 
 ## Результат фазы
 
-- [ ] Entity `Tenant` — Id, Slug, Name, Status
-- [ ] `TenantId` column on `todos`, `users` (nullable migration path)
-- [ ] FluentMigrator `V007__tenants_rls.sql` — RLS policies
-- [ ] `ITenantContext` — current TenantId from header/JWT claim
-- [ ] Middleware `TenantResolutionMiddleware` — validate tenant exists
+- [x] Entity `Tenant` — Id, Slug, Name, Status, CreatedAt (B-11.1; migration **V009**)
+- [x] `TenantId` column on `todos`, `users` + backfill to `default`
+- [x] RLS policies + FORCE on `todos` / `users` (B-11.2)
+- [x] `ITenantContext` + `TenantDbConnectionInterceptor` + Dapper SET (B-11.3)
+- [x] Middleware `TenantResolutionMiddleware` — header / JWT claim (B-11.4)
 - [ ] EF global query filter `.HasQueryFilter(e => e.TenantId == _tenantContext.TenantId)`
-- [ ] Npgsql `SET app.current_tenant = '<uuid>'` per connection for RLS
-- [ ] Seed tenants: `default`, `acme-corp` with sample data
+- [x] Npgsql `SET app.current_tenant` per connection for RLS
+- [x] Seed tenants: `default`, `acme-corp`
 - [ ] Integration tests — tenant A cannot read tenant B todos
 
 ---

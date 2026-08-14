@@ -1,6 +1,7 @@
 using TodoPlatform.Domain.Common;
 using TodoPlatform.Domain.Enums;
 using TodoPlatform.Domain.Events;
+using TodoPlatform.Domain.Tenancy;
 
 namespace TodoPlatform.Domain.Entities;
 
@@ -9,6 +10,7 @@ public class Todo : Entity
     public string Title { get; private set; } = string.Empty;
     public bool Completed { get; private set; }
     public Guid UserId { get; private set; }
+    public Guid TenantId { get; private set; }
     public TodoStatus Status { get; private set; } = TodoStatus.Todo;
     public TodoPriority Priority { get; private set; } = TodoPriority.Medium;
 
@@ -20,7 +22,8 @@ public class Todo : Entity
         string title,
         Guid userId,
         TodoStatus status = TodoStatus.Todo,
-        TodoPriority priority = TodoPriority.Medium)
+        TodoPriority priority = TodoPriority.Medium,
+        Guid? tenantId = null)
     {
         if (string.IsNullOrWhiteSpace(title))
             throw new ArgumentException("Title is required.", nameof(title));
@@ -32,6 +35,7 @@ public class Todo : Entity
         {
             Title = title.Trim(),
             UserId = userId,
+            TenantId = tenantId is { } id && id != Guid.Empty ? id : WellKnownTenants.DefaultId,
             Status = status,
             Priority = priority,
             Completed = false

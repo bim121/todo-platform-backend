@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using TodoPlatform.Application.Common;
 using TodoPlatform.Application.Interfaces;
 using TodoPlatform.Application.Services;
+using TodoPlatform.Application.Tenancy;
 using TodoPlatform.Domain.Entities;
 
 namespace TodoPlatform.Infrastructure.Security;
@@ -10,7 +11,8 @@ namespace TodoPlatform.Infrastructure.Security;
 public sealed class UserSyncService(
     IHttpContextAccessor httpContextAccessor,
     IUserRepository users,
-    IDomainEventDispatcher domainEventDispatcher) : IUserSyncService
+    IDomainEventDispatcher domainEventDispatcher,
+    ITenantContext tenantContext) : IUserSyncService
 {
     public async Task<User?> SyncCurrentUserAsync(CancellationToken cancellationToken = default)
     {
@@ -44,7 +46,7 @@ public sealed class UserSyncService(
             }
             else
             {
-                user = User.CreateFromKeycloak(keycloakSub, email, name);
+                user = User.CreateFromKeycloak(keycloakSub, email, name, tenantContext.TenantId);
                 await users.AddAsync(user, cancellationToken);
 
                 if (user.DomainEvents.Count > 0)
