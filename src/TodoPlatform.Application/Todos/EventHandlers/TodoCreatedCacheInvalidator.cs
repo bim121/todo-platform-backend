@@ -14,12 +14,15 @@ public sealed class TodoCreatedCacheInvalidator(
     public async Task Handle(TodoCreatedEvent notification, CancellationToken cancellationToken)
     {
         await cache.RemoveByPrefixAsync(
-            CacheKeys.TodosByUserPrefix(notification.UserId),
+            CacheKeys.TodosByUserPrefix(notification.TenantId, notification.UserId),
             cancellationToken);
-        await cache.RemoveAsync(CacheKeys.TodoStatsByUser(notification.UserId), cancellationToken);
+        await cache.RemoveAsync(
+            CacheKeys.TodoStatsByUser(notification.TenantId, notification.UserId),
+            cancellationToken);
 
         logger.LogDebug(
-            "Invalidated todos list cache for user {UserId} after create {TodoId}",
+            "Invalidated todos list cache for tenant {TenantId} user {UserId} after create {TodoId}",
+            notification.TenantId,
             notification.UserId,
             notification.TodoId);
     }

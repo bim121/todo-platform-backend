@@ -36,17 +36,20 @@ Write: DB commit → domain event / handler → delete keys
 
 | Key | TTL |
 |-----|-----|
-| `todos:user:{userId}:a{active}:s{skip}:t{take}` | 5 min (empty list → **30 s**) |
-| `todo:{id}` | 10 min |
+| `todos:tenant:{tenantId}:user:{userId}:a{active}:s{skip}:t{take}` | 5 min (empty list → **30 s**) |
+| `todo:tenant:{tenantId}:{id}` | 10 min |
+| `stats:tenant:{tenantId}:user:{userId}` | 1 min |
 
-Prefix invalidation: `todos:user:{userId}` снимает все варианты фильтров.
+Prefix invalidation: `todos:tenant:{tenantId}:user:{userId}` снимает все варианты фильтров.
+
+B-11: tenant is part of every key so tenant B cannot read tenant A’s cached DTOs.
 
 ### 4. Invalidation
 
 | Trigger | Action |
 |---------|--------|
-| `TodoCreatedEvent` | `RemoveByPrefix(todos:user:{uid})` |
-| `TodoCompletedEvent` | remove `todo:{id}` + list prefix |
+| `TodoCreatedEvent` | `RemoveByPrefix(todos:tenant:{tid}:user:{uid})` |
+| `TodoCompletedEvent` | remove `todo:tenant:{tid}:{id}` + list prefix |
 | `TodoDeletedEvent` | same |
 | `UpdateTodoHandler` | same (title/status без domain event) |
 

@@ -30,7 +30,11 @@ public sealed class GetTodosQueryHandlerTests
         currentUser.Setup(c => c.UserId).Returns(userId);
 
         var cache = new PassThroughCacheService();
-        var handler = new GetTodosQueryHandler(repository.Object, currentUser.Object, cache);
+        var handler = new GetTodosQueryHandler(
+            repository.Object,
+            currentUser.Object,
+            cache,
+            TestTenantContext.Default);
         var result = await handler.Handle(new GetTodosQuery(userId), CancellationToken.None);
 
         Assert.Equal(2, result.Count);
@@ -67,7 +71,8 @@ public sealed class GetTodosQueryHandlerTests
         var handler = new GetTodosQueryHandler(
             repository.Object,
             currentUser.Object,
-            new PassThroughCacheService());
+            new PassThroughCacheService(),
+            TestTenantContext.Default);
         await handler.Handle(new GetTodosQuery(userId, ActiveOnly: true), CancellationToken.None);
 
         Assert.NotNull(captured);
@@ -92,7 +97,8 @@ public sealed class GetTodosQueryHandlerTests
         var handler = new GetTodosQueryHandler(
             repository.Object,
             currentUser.Object,
-            new PassThroughCacheService());
+            new PassThroughCacheService(),
+            TestTenantContext.Default);
         await handler.Handle(new GetTodosQuery(userId, Skip: 2, Take: 5), CancellationToken.None);
 
         Assert.NotNull(captured);

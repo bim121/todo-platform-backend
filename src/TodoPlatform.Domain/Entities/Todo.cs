@@ -41,7 +41,7 @@ public class Todo : Entity
             Completed = false
         };
 
-        todo.RaiseDomainEvent(new TodoCreatedEvent(todo.Id, userId, todo.Title));
+        todo.RaiseDomainEvent(new TodoCreatedEvent(todo.Id, userId, todo.TenantId, todo.Title));
         return todo;
     }
 
@@ -52,11 +52,11 @@ public class Todo : Entity
 
         Completed = true;
         Status = TodoStatus.Done;
-        RaiseDomainEvent(new TodoCompletedEvent(Id, UserId));
+        RaiseDomainEvent(new TodoCompletedEvent(Id, UserId, TenantId));
     }
 
     public void MarkDeleted() =>
-        RaiseDomainEvent(new TodoDeletedEvent(Id, UserId));
+        RaiseDomainEvent(new TodoDeletedEvent(Id, UserId, TenantId));
 
     public void UpdateTitle(string title)
     {

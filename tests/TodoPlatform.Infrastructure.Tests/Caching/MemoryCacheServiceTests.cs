@@ -3,6 +3,7 @@ using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using TodoPlatform.Application.Caching;
+using TodoPlatform.Domain.Tenancy;
 using TodoPlatform.Infrastructure.Caching;
 
 namespace TodoPlatform.Infrastructure.Tests.Caching;
@@ -15,7 +16,7 @@ public sealed class MemoryCacheServiceTests
         var metrics = new CacheMetrics();
         var sut = CreateSut(metrics);
         var factoryCalls = 0;
-        var key = CacheKeys.TodosByUser(Guid.NewGuid());
+        var key = CacheKeys.TodosByUser(WellKnownTenants.DefaultId, Guid.NewGuid());
 
         var first = await sut.GetOrSetAsync(
             key,
@@ -46,13 +47,14 @@ public sealed class MemoryCacheServiceTests
     {
         var sut = CreateSut();
         var userId = Guid.NewGuid();
-        var listKey = CacheKeys.TodosByUser(userId);
-        var todoKey = CacheKeys.TodoById(Guid.NewGuid());
+        var tenantId = WellKnownTenants.DefaultId;
+        var listKey = CacheKeys.TodosByUser(tenantId, userId);
+        var todoKey = CacheKeys.TodoById(tenantId, Guid.NewGuid());
 
         await sut.GetOrSetAsync(listKey, _ => Task.FromResult("list"), TimeSpan.FromMinutes(1));
         await sut.GetOrSetAsync(todoKey, _ => Task.FromResult("todo"), TimeSpan.FromMinutes(1));
 
-        await sut.RemoveByPrefixAsync(CacheKeys.TodosByUserPrefix(userId));
+        await sut.RemoveByPrefixAsync(CacheKeys.TodosByUserPrefix(tenantId, userId));
 
         var factoryCalls = 0;
         await sut.GetOrSetAsync(
@@ -82,7 +84,7 @@ public sealed class MemoryCacheServiceTests
     public async Task GetOrSetAsync_EmptyCollection_UsesShortTtlPath()
     {
         var sut = CreateSut();
-        var key = CacheKeys.TodosByUser(Guid.NewGuid());
+        var key = CacheKeys.TodosByUser(WellKnownTenants.DefaultId, Guid.NewGuid());
 
         var result = await sut.GetOrSetAsync(
             key,

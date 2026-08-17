@@ -4,6 +4,7 @@ using TodoPlatform.Application.Caching;
 using TodoPlatform.Application.Interfaces;
 using TodoPlatform.Application.Todos.EventHandlers;
 using TodoPlatform.Domain.Events;
+using TodoPlatform.Domain.Tenancy;
 
 namespace TodoPlatform.Application.Tests.Todos.EventHandlers;
 
@@ -17,15 +18,16 @@ public sealed class TodoCacheInvalidatorTests
             cache.Object,
             NullLogger<TodoCreatedCacheInvalidator>.Instance);
         var userId = Guid.NewGuid();
-        var evt = new TodoCreatedEvent(Guid.NewGuid(), userId, "New");
+        var tenantId = WellKnownTenants.DefaultId;
+        var evt = new TodoCreatedEvent(Guid.NewGuid(), userId, tenantId, "New");
 
         await handler.Handle(evt, CancellationToken.None);
 
         cache.Verify(
-            c => c.RemoveByPrefixAsync(CacheKeys.TodosByUserPrefix(userId), It.IsAny<CancellationToken>()),
+            c => c.RemoveByPrefixAsync(CacheKeys.TodosByUserPrefix(tenantId, userId), It.IsAny<CancellationToken>()),
             Times.Once);
         cache.Verify(
-            c => c.RemoveAsync(CacheKeys.TodoStatsByUser(userId), It.IsAny<CancellationToken>()),
+            c => c.RemoveAsync(CacheKeys.TodoStatsByUser(tenantId, userId), It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -38,15 +40,16 @@ public sealed class TodoCacheInvalidatorTests
             NullLogger<TodoCompletedCacheInvalidator>.Instance);
         var todoId = Guid.NewGuid();
         var userId = Guid.NewGuid();
+        var tenantId = WellKnownTenants.AcmeId;
 
-        await handler.Handle(new TodoCompletedEvent(todoId, userId), CancellationToken.None);
+        await handler.Handle(new TodoCompletedEvent(todoId, userId, tenantId), CancellationToken.None);
 
-        cache.Verify(c => c.RemoveAsync(CacheKeys.TodoById(todoId), It.IsAny<CancellationToken>()), Times.Once);
+        cache.Verify(c => c.RemoveAsync(CacheKeys.TodoById(tenantId, todoId), It.IsAny<CancellationToken>()), Times.Once);
         cache.Verify(
-            c => c.RemoveByPrefixAsync(CacheKeys.TodosByUserPrefix(userId), It.IsAny<CancellationToken>()),
+            c => c.RemoveByPrefixAsync(CacheKeys.TodosByUserPrefix(tenantId, userId), It.IsAny<CancellationToken>()),
             Times.Once);
         cache.Verify(
-            c => c.RemoveAsync(CacheKeys.TodoStatsByUser(userId), It.IsAny<CancellationToken>()),
+            c => c.RemoveAsync(CacheKeys.TodoStatsByUser(tenantId, userId), It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -59,15 +62,16 @@ public sealed class TodoCacheInvalidatorTests
             NullLogger<TodoDeletedCacheInvalidator>.Instance);
         var todoId = Guid.NewGuid();
         var userId = Guid.NewGuid();
+        var tenantId = WellKnownTenants.DefaultId;
 
-        await handler.Handle(new TodoDeletedEvent(todoId, userId), CancellationToken.None);
+        await handler.Handle(new TodoDeletedEvent(todoId, userId, tenantId), CancellationToken.None);
 
-        cache.Verify(c => c.RemoveAsync(CacheKeys.TodoById(todoId), It.IsAny<CancellationToken>()), Times.Once);
+        cache.Verify(c => c.RemoveAsync(CacheKeys.TodoById(tenantId, todoId), It.IsAny<CancellationToken>()), Times.Once);
         cache.Verify(
-            c => c.RemoveByPrefixAsync(CacheKeys.TodosByUserPrefix(userId), It.IsAny<CancellationToken>()),
+            c => c.RemoveByPrefixAsync(CacheKeys.TodosByUserPrefix(tenantId, userId), It.IsAny<CancellationToken>()),
             Times.Once);
         cache.Verify(
-            c => c.RemoveAsync(CacheKeys.TodoStatsByUser(userId), It.IsAny<CancellationToken>()),
+            c => c.RemoveAsync(CacheKeys.TodoStatsByUser(tenantId, userId), It.IsAny<CancellationToken>()),
             Times.Once);
     }
 }

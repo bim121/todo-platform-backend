@@ -17,10 +17,12 @@
 - [x] Middleware `TenantResolutionMiddleware` — header / JWT claim (B-11.4)
 - [x] `CreateTodo` assigns `TenantId` from `ITenantContext` (B-11.5)
 - [x] OpenAPI `X-Tenant-Id` + Keycloak `tenant_id` mapper (B-11.6)
-- [ ] EF global query filter `.HasQueryFilter(e => e.TenantId == _tenantContext.TenantId)`
+- [x] EF global query filter `.HasQueryFilter(e => e.TenantId == _tenantContext.TenantId)`
 - [x] Npgsql `SET app.current_tenant` per connection for RLS
 - [x] Seed tenants: `default`, `acme-corp`
-- [ ] Integration tests — tenant A cannot read tenant B todos
+- [x] Integration tests — tenant A cannot read tenant B todos
+- [x] Redis keys include tenant; invalidation uses `TenantId` from domain events
+- [x] ADR-026 + `docs/multi-tenancy/isolation.md`
 
 ---
 
@@ -76,18 +78,18 @@
 
 ## Неделя 3 — Tests & hardening
 
-### B-11.7 Cross-tenant tests
+### B-11.7 Cross-tenant tests ✅
 
 1. Create todo in tenant A, GET with tenant B header → empty/404
-2. Direct SQL bypass test — RLS blocks without SET
-3. Admin role bypass policy (optional separate policy for admin)
+2. Direct SQL bypass test — RLS blocks without SET (`todo_app` NOSUPERUSER)
+3. Admin role bypass policy — `app.bypass_rls` for platform-wide stats only
 
-### B-11.8 Cache key update
+### B-11.8 Cache key update ✅
 
 1. Redis keys include tenant: `todos:tenant:{tid}:user:{uid}`
 2. Update invalidation handlers from B-06
 
-### B-11.9 ADR & docs
+### B-11.9 ADR & docs ✅
 
 1. ADR-026: RLS vs schema-per-tenant (why shared schema + RLS)
 2. `docs/multi-tenancy/isolation.md` — debug guide

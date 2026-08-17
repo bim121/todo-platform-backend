@@ -15,6 +15,7 @@ public sealed class TodoDomainEventsTests
         var created = Assert.IsType<TodoCreatedEvent>(domainEvent);
         Assert.Equal(todo.Id, created.TodoId);
         Assert.Equal(userId, created.UserId);
+        Assert.Equal(todo.TenantId, created.TenantId);
         Assert.Equal("Learn domain events", created.Title);
         Assert.True(created.OccurredOn <= DateTimeOffset.UtcNow);
     }
@@ -31,6 +32,7 @@ public sealed class TodoDomainEventsTests
         var completed = Assert.IsType<TodoCompletedEvent>(domainEvent);
         Assert.Equal(todo.Id, completed.TodoId);
         Assert.Equal(todo.UserId, completed.UserId);
+        Assert.Equal(todo.TenantId, completed.TenantId);
     }
 
     [Fact]

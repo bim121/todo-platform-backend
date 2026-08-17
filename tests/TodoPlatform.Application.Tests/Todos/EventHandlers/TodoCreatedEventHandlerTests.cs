@@ -13,7 +13,7 @@ public sealed class TodoCreatedEventHandlerTests
     {
         var logger = new Mock<ILogger<TodoCreatedAuditHandler>>();
         var handler = new TodoCreatedAuditHandler(logger.Object);
-        var evt = new TodoCreatedEvent(Guid.NewGuid(), Guid.NewGuid(), "Audit me");
+        var evt = new TodoCreatedEvent(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "Audit me");
 
         await handler.Handle(evt, CancellationToken.None);
 

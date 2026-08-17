@@ -9,6 +9,7 @@
 | ADR-022 | [022-caching-strategy.md](./022-caching-strategy.md) | Redis cache-aside | **Accepted** (B-06) |
 | ADR-023 | `023-outbox-pattern.md` | Transactional outbox | planned (B-07) |
 | ADR-025 | [025-ef-dapper-read-split.md](./025-ef-dapper-read-split.md) | EF write / Dapper read | **Accepted** (B-10) |
+| ADR-026 | [026-shared-schema-rls.md](./026-shared-schema-rls.md) | Shared schema + RLS | **Accepted** (B-11) |
 
 ## Формат
 

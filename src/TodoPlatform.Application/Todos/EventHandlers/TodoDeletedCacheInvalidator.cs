@@ -13,15 +13,18 @@ public sealed class TodoDeletedCacheInvalidator(
 {
     public async Task Handle(TodoDeletedEvent notification, CancellationToken cancellationToken)
     {
-        await cache.RemoveAsync(CacheKeys.TodoById(notification.TodoId), cancellationToken);
+        await cache.RemoveAsync(CacheKeys.TodoById(notification.TenantId, notification.TodoId), cancellationToken);
         await cache.RemoveByPrefixAsync(
-            CacheKeys.TodosByUserPrefix(notification.UserId),
+            CacheKeys.TodosByUserPrefix(notification.TenantId, notification.UserId),
             cancellationToken);
-        await cache.RemoveAsync(CacheKeys.TodoStatsByUser(notification.UserId), cancellationToken);
+        await cache.RemoveAsync(
+            CacheKeys.TodoStatsByUser(notification.TenantId, notification.UserId),
+            cancellationToken);
 
         logger.LogDebug(
-            "Invalidated cache after delete todo {TodoId} user {UserId}",
+            "Invalidated cache after delete todo {TodoId} tenant {TenantId} user {UserId}",
             notification.TodoId,
+            notification.TenantId,
             notification.UserId);
     }
 }

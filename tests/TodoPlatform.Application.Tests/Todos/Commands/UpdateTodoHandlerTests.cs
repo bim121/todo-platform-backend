@@ -36,8 +36,8 @@ public sealed class UpdateTodoHandlerTests
         Assert.True(result.Completed);
         Assert.Equal("done", result.Status);
         Assert.NotNull(updated);
-        Assert.Contains(CacheKeys.TodoById(todo.Id), cache.RemovedKeys);
-        Assert.Contains(CacheKeys.TodosByUserPrefix(todo.UserId), cache.RemovedPrefixes);
+        Assert.Contains(CacheKeys.TodoById(todo.TenantId, todo.Id), cache.RemovedKeys);
+        Assert.Contains(CacheKeys.TodosByUserPrefix(todo.TenantId, todo.UserId), cache.RemovedPrefixes);
     }
 
     [Fact]

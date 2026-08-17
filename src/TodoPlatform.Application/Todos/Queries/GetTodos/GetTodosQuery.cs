@@ -4,6 +4,7 @@ using TodoPlatform.Application.Dtos;
 using TodoPlatform.Application.Exceptions;
 using TodoPlatform.Application.Interfaces;
 using TodoPlatform.Application.Services;
+using TodoPlatform.Application.Tenancy;
 using TodoPlatform.Application.Todos.Specifications;
 
 namespace TodoPlatform.Application.Todos.Queries.GetTodos;
@@ -17,7 +18,8 @@ public sealed record GetTodosQuery(
 public sealed class GetTodosQueryHandler(
     ITodoRepository repository,
     ICurrentUserService currentUser,
-    ICacheService cache)
+    ICacheService cache,
+    ITenantContext tenantContext)
     : IRequestHandler<GetTodosQuery, IReadOnlyList<TodoDto>>
 {
     public async Task<IReadOnlyList<TodoDto>> Handle(
@@ -35,7 +37,9 @@ public sealed class GetTodosQueryHandler(
                 });
         }
 
+        var tenantId = tenantContext.RequireTenantId();
         var cacheKey = CacheKeys.TodosByUser(
+            tenantId,
             userId,
             request.ActiveOnly,
             request.Skip,

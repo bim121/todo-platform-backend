@@ -4,6 +4,7 @@ using TodoPlatform.Application.Dtos;
 using TodoPlatform.Application.Exceptions;
 using TodoPlatform.Application.Interfaces;
 using TodoPlatform.Application.Services;
+using TodoPlatform.Application.Tenancy;
 
 namespace TodoPlatform.Application.Todos.Queries.GetTodoStats;
 
@@ -12,7 +13,8 @@ public sealed record GetTodoStatsQuery(Guid? UserId = null) : IRequest<TodoStats
 public sealed class GetTodoStatsQueryHandler(
     ITodoStatsReadStore statsStore,
     ICurrentUserService currentUser,
-    ICacheService cache)
+    ICacheService cache,
+    ITenantContext tenantContext)
     : IRequestHandler<GetTodoStatsQuery, TodoStatsDto>
 {
     public async Task<TodoStatsDto> Handle(
@@ -30,8 +32,9 @@ public sealed class GetTodoStatsQueryHandler(
                 });
         }
 
+        var tenantId = tenantContext.RequireTenantId();
         return await cache.GetOrSetAsync(
-            CacheKeys.TodoStatsByUser(userId),
+            CacheKeys.TodoStatsByUser(tenantId, userId),
             ct => statsStore.GetByUserIdAsync(userId, ct),
             CacheTtl.TodoStats,
             cancellationToken);

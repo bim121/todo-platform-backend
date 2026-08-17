@@ -27,11 +27,11 @@ public sealed class UpdateTodoHandler(
 
             // Title/status updates may not raise domain events — invalidate explicitly.
             // TodoCompletedEvent also invalidates when Complete() runs (double-remove is fine).
-            await cache.RemoveAsync(CacheKeys.TodoById(todo.Id), cancellationToken);
+            await cache.RemoveAsync(CacheKeys.TodoById(todo.TenantId, todo.Id), cancellationToken);
             await cache.RemoveByPrefixAsync(
-                CacheKeys.TodosByUserPrefix(todo.UserId),
+                CacheKeys.TodosByUserPrefix(todo.TenantId, todo.UserId),
                 cancellationToken);
-            await cache.RemoveAsync(CacheKeys.TodoStatsByUser(todo.UserId), cancellationToken);
+            await cache.RemoveAsync(CacheKeys.TodoStatsByUser(todo.TenantId, todo.UserId), cancellationToken);
 
             return TodoDto.FromEntity(todo);
         }

@@ -5,13 +5,14 @@ using Npgsql;
 namespace TodoPlatform.Infrastructure.Tenancy;
 
 /// <summary>
-/// Sets PostgreSQL <c>app.current_tenant</c> used by RLS policies.
+/// Sets PostgreSQL GUCs used by RLS policies.
 /// Session-level (not LOCAL) so it works outside a transaction; RESET on connection close
 /// so Npgsql pooling cannot leak a tenant to the next request.
 /// </summary>
 public static class TenantSession
 {
     public const string SettingName = "app.current_tenant";
+    public const string BypassSettingName = "app.bypass_rls";
 
     public static void Apply(IDbConnection connection, Guid tenantId)
     {
@@ -35,13 +36,27 @@ public static class TenantSession
         await command.ExecuteNonQueryAsync(cancellationToken);
     }
 
+    public static void ApplyBypass(IDbConnection connection)
+    {
+        if (!CanConfigure(connection))
+            return;
+
+        using var command = connection.CreateCommand();
+        command.CommandText = "SELECT set_config('app.bypass_rls', 'true', false);";
+        command.ExecuteNonQuery();
+    }
+
     public static void Reset(IDbConnection connection)
     {
         if (!CanConfigure(connection))
             return;
 
         using var command = connection.CreateCommand();
-        command.CommandText = "SELECT set_config('app.current_tenant', '', false);";
+        command.CommandText =
+            """
+            SELECT set_config('app.current_tenant', '', false),
+                   set_config('app.bypass_rls', '', false);
+            """;
         command.ExecuteNonQuery();
     }
 
@@ -51,12 +66,17 @@ public static class TenantSession
             return;
 
         await using var command = connection.CreateCommand();
-        command.CommandText = "SELECT set_config('app.current_tenant', '', false);";
+        command.CommandText =
+            """
+            SELECT set_config('app.current_tenant', '', false),
+                   set_config('app.bypass_rls', '', false);
+            """;
         await command.ExecuteNonQueryAsync(cancellationToken);
     }
 
     private static bool CanConfigure(IDbConnection connection) =>
-        connection is NpgsqlConnection { State: ConnectionState.Open };
+        connection.State == ConnectionState.Open
+        && (connection is NpgsqlConnection || connection.GetType().Name.Contains("Npgsql", StringComparison.Ordinal));
 
     private static void AddParameter(IDbCommand command, string name, string value)
     {

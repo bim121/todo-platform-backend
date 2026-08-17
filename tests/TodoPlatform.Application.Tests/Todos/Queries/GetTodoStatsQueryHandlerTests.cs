@@ -25,7 +25,11 @@ public sealed class GetTodoStatsQueryHandlerTests
         currentUser.Setup(c => c.UserId).Returns(userId);
 
         var cache = new PassThroughCacheService();
-        var handler = new GetTodoStatsQueryHandler(store.Object, currentUser.Object, cache);
+        var handler = new GetTodoStatsQueryHandler(
+            store.Object,
+            currentUser.Object,
+            cache,
+            TestTenantContext.Default);
         var result = await handler.Handle(new GetTodoStatsQuery(userId), CancellationToken.None);
 
         Assert.Equal(expected, result);
@@ -50,7 +54,8 @@ public sealed class GetTodoStatsQueryHandlerTests
         var handler = new GetTodoStatsQueryHandler(
             store.Object,
             currentUser.Object,
-            new PassThroughCacheService());
+            new PassThroughCacheService(),
+            TestTenantContext.Default);
         var result = await handler.Handle(new GetTodoStatsQuery(), CancellationToken.None);
 
         Assert.Equal(expected, result);
@@ -66,7 +71,8 @@ public sealed class GetTodoStatsQueryHandlerTests
         var handler = new GetTodoStatsQueryHandler(
             store.Object,
             currentUser.Object,
-            new PassThroughCacheService());
+            new PassThroughCacheService(),
+            TestTenantContext.Default);
 
         await Assert.ThrowsAsync<ValidationException>(() =>
             handler.Handle(new GetTodoStatsQuery(), CancellationToken.None));

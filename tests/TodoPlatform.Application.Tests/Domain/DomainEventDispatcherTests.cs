@@ -12,8 +12,8 @@ public sealed class DomainEventDispatcherTests
     {
         var mediator = new Mock<IMediator>();
         var dispatcher = new DomainEventDispatcher(mediator.Object);
-        var created = new TodoCreatedEvent(Guid.NewGuid(), Guid.NewGuid(), "Test");
-        var completed = new TodoCompletedEvent(Guid.NewGuid(), Guid.NewGuid());
+        var created = new TodoCreatedEvent(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "Test");
+        var completed = new TodoCompletedEvent(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid());
 
         await dispatcher.DispatchEventsAsync([created, completed]);
 

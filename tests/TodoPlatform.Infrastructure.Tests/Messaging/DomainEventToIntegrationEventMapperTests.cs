@@ -14,7 +14,7 @@ public sealed class DomainEventToIntegrationEventMapperTests
     {
         var todoId = Guid.NewGuid();
         var userId = Guid.NewGuid();
-        var domainEvent = new TodoCreatedEvent(todoId, userId, "Buy milk");
+        var domainEvent = new TodoCreatedEvent(todoId, userId, Guid.NewGuid(), "Buy milk");
 
         var envelope = _sut.Map(domainEvent);
 
@@ -34,7 +34,7 @@ public sealed class DomainEventToIntegrationEventMapperTests
     {
         var todoId = Guid.NewGuid();
         var userId = Guid.NewGuid();
-        var domainEvent = new TodoCompletedEvent(todoId, userId);
+        var domainEvent = new TodoCompletedEvent(todoId, userId, Guid.NewGuid());
 
         var envelope = _sut.Map(domainEvent);
 
@@ -48,7 +48,7 @@ public sealed class DomainEventToIntegrationEventMapperTests
     [Fact]
     public void Map_UnknownDomainEvent_ReturnsNull()
     {
-        var domainEvent = new TodoDeletedEvent(Guid.NewGuid(), Guid.NewGuid());
+        var domainEvent = new TodoDeletedEvent(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid());
 
         Assert.Null(_sut.Map(domainEvent));
     }
@@ -56,7 +56,7 @@ public sealed class DomainEventToIntegrationEventMapperTests
     [Fact]
     public void Envelope_SerializesToTypeVersionDataShape()
     {
-        var domainEvent = new TodoCreatedEvent(Guid.NewGuid(), Guid.NewGuid(), "Title");
+        var domainEvent = new TodoCreatedEvent(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "Title");
         var envelope = _sut.Map(domainEvent)!;
 
         var json = JsonSerializer.Serialize(envelope, new JsonSerializerOptions

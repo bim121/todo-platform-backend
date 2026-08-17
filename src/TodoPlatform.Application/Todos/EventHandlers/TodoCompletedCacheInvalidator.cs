@@ -13,17 +13,26 @@ public sealed class TodoCompletedCacheInvalidator(
 {
     public async Task Handle(TodoCompletedEvent notification, CancellationToken cancellationToken)
     {
-        await InvalidateAsync(notification.TodoId, notification.UserId, cancellationToken);
-        logger.LogDebug(
-            "Invalidated cache after complete todo {TodoId} user {UserId}",
+        await InvalidateAsync(
+            notification.TenantId,
             notification.TodoId,
+            notification.UserId,
+            cancellationToken);
+        logger.LogDebug(
+            "Invalidated cache after complete todo {TodoId} tenant {TenantId} user {UserId}",
+            notification.TodoId,
+            notification.TenantId,
             notification.UserId);
     }
 
-    private async Task InvalidateAsync(Guid todoId, Guid userId, CancellationToken cancellationToken)
+    private async Task InvalidateAsync(
+        Guid tenantId,
+        Guid todoId,
+        Guid userId,
+        CancellationToken cancellationToken)
     {
-        await cache.RemoveAsync(CacheKeys.TodoById(todoId), cancellationToken);
-        await cache.RemoveByPrefixAsync(CacheKeys.TodosByUserPrefix(userId), cancellationToken);
-        await cache.RemoveAsync(CacheKeys.TodoStatsByUser(userId), cancellationToken);
+        await cache.RemoveAsync(CacheKeys.TodoById(tenantId, todoId), cancellationToken);
+        await cache.RemoveByPrefixAsync(CacheKeys.TodosByUserPrefix(tenantId, userId), cancellationToken);
+        await cache.RemoveAsync(CacheKeys.TodoStatsByUser(tenantId, userId), cancellationToken);
     }
 }

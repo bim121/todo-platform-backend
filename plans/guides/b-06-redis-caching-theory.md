@@ -72,20 +72,20 @@ Infrastructure
 `IDistributedCache` (Microsoft) умеет get/set/remove **одного** ключа.  
 `RemoveByPrefixAsync` требует **StackExchange.Redis** `KEYS`/`SCAN` — поэтому в DI есть `IConnectionMultiplexer`.
 
-Instance name `TodoPlatform:` добавляется Redis-провайдером к каждому ключу. SCAN ищет `TodoPlatform:todos:user:{guid}*`.
+Instance name `TodoPlatform:` добавляется Redis-провайдером к каждому ключу. SCAN ищет `TodoPlatform:todos:tenant:{tid}:user:{guid}*`.
 
 ### 3.2 Ключи
 
 ```csharp
 // Application/Caching/CacheKeys.cs
-CacheKeys.TodosByUser(userId, activeOnly, skip, take);
-// → "todos:user:{guid}:aFalse:s-:t-"
+CacheKeys.TodosByUser(tenantId, userId, activeOnly, skip, take);
+// → "todos:tenant:{guid}:user:{guid}:aFalse:s-:t-"
 
-CacheKeys.TodosByUserPrefix(userId);
-// → "todos:user:{guid}"   // для RemoveByPrefix
+CacheKeys.TodosByUserPrefix(tenantId, userId);
+// → "todos:tenant:{guid}:user:{guid}"   // для RemoveByPrefix
 
-CacheKeys.TodoById(todoId);
-// → "todo:{guid}"
+CacheKeys.TodoById(tenantId, todoId);
+// → "todo:tenant:{guid}:{guid}"
 ```
 
 Почему в list-ключе есть `active/skip/take`?  
@@ -111,10 +111,10 @@ CacheKeys.TodoById(todoId);
 ```
 CreateTodo → SaveChanges → Publish TodoCreatedEvent
                               → TodoCreatedCacheInvalidator
-                                 RemoveByPrefix(todos:user:{uid})
+                                 RemoveByPrefix(todos:tenant:{tid}:user:{uid})
 
 Complete via Update → Todo.Complete() → TodoCompletedEvent
-                              → remove todo:{id} + list prefix
+                              → remove todo:tenant:{tid}:{id} + list prefix
 
 Delete → MarkDeleted() → TodoDeletedEvent → same
 
