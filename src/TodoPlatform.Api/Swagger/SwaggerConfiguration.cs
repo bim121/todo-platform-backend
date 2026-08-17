@@ -61,6 +61,8 @@ public static class SwaggerConfiguration
                 [new OpenApiSecuritySchemeReference(BearerSchemeName, document)] = [],
                 [new OpenApiSecuritySchemeReference(OAuthSchemeName, document)] = ["openid", "profile", "email"]
             });
+
+            options.OperationFilter<TenantIdHeaderOperationFilter>();
         });
 
         return services;

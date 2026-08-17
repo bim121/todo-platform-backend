@@ -74,4 +74,58 @@ public sealed class OpenApiContractTests(OpenApiWebApplicationFactory factory)
 
         Assert.True(listTodos.GetProperty("responses").TryGetProperty("400", out _));
     }
+
+    [Fact]
+    public async Task Swagger_AuthenticatedTodosDeclareTenantIdHeader()
+    {
+        var client = factory.CreateClient();
+        var json = await client.GetStringAsync("/swagger/v1/swagger.json");
+        using var document = JsonDocument.Parse(json);
+
+        var listTodos = document.RootElement
+            .GetProperty("paths")
+            .GetProperty("/api/todos")
+            .GetProperty("get");
+
+        Assert.True(
+            HasHeaderParameter(listTodos, "X-Tenant-Id"),
+            "Authenticated todos operations must document X-Tenant-Id (B-11.6).");
+    }
+
+    [Fact]
+    public async Task Swagger_AnonymousHealthOmitsTenantIdHeader()
+    {
+        var client = factory.CreateClient();
+        var json = await client.GetStringAsync("/swagger/v1/swagger.json");
+        using var document = JsonDocument.Parse(json);
+
+        var health = document.RootElement
+            .GetProperty("paths")
+            .GetProperty("/api/Health")
+            .GetProperty("get");
+
+        Assert.False(HasHeaderParameter(health, "X-Tenant-Id"));
+    }
+
+    private static bool HasHeaderParameter(JsonElement operation, string name)
+    {
+        if (!operation.TryGetProperty("parameters", out var parameters)
+            || parameters.ValueKind != JsonValueKind.Array)
+        {
+            return false;
+        }
+
+        foreach (var parameter in parameters.EnumerateArray())
+        {
+            var parameterName = parameter.TryGetProperty("name", out var n) ? n.GetString() : null;
+            var location = parameter.TryGetProperty("in", out var loc) ? loc.GetString() : null;
+            if (string.Equals(parameterName, name, StringComparison.OrdinalIgnoreCase)
+                && string.Equals(location, "header", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
 }

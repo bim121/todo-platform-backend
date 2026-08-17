@@ -108,15 +108,18 @@ curl -X POST "http://localhost:8180/realms/todo-platform/protocol/openid-connect
 ```bash
 # РЎРїРёСЃРѕРє todos С‚РµРєСѓС‰РµРіРѕ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ (userId РѕРїС†РёРѕРЅР°Р»РµРЅ вЂ” Р±РµСЂС‘С‚СЃСЏ РёР· С‚РѕРєРµРЅР°)
 curl http://localhost:5000/api/todos \
-  -H "Authorization: Bearer <access_token>"
+  -H "Authorization: Bearer <access_token>" \
+  -H "X-Tenant-Id: default"
 
 # РџСЂРѕС„РёР»СЊ С‚РµРєСѓС‰РµРіРѕ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ (BFF)
 curl http://localhost:5000/api/auth/me \
-  -H "Authorization: Bearer <access_token>"
+  -H "Authorization: Bearer <access_token>" \
+  -H "X-Tenant-Id: default"
 
 # Admin endpoint вЂ” С‚РѕР»СЊРєРѕ СЂРѕР»СЊ admin
 curl http://localhost:5000/api/admin/tenants \
-  -H "Authorization: Bearer <admin_access_token>"
+  -H "Authorization: Bearer <admin_access_token>" \
+  -H "X-Tenant-Id: default"
 ```
 
 ### РџРѕР»РЅС‹Р№ dev-СЃС†РµРЅР°СЂРёР№ (copy-paste)
@@ -131,16 +134,22 @@ TOKEN=$(curl -s -X POST "http://localhost:8180/realms/todo-platform/protocol/ope
   -d "password=password123" | jq -r .access_token)
 
 # 2. РџСЂРѕС„РёР»СЊ (РїРµСЂРІС‹Р№ Р·Р°РїСЂРѕСЃ Р»РёРЅРєСѓРµС‚ Keycloak sub Рє seed-РїРѕР»СЊР·РѕРІР°С‚РµР»СЋ РІ Р‘Р”)
-curl -s http://localhost:5000/api/auth/me -H "Authorization: Bearer $TOKEN" | jq
+curl -s http://localhost:5000/api/auth/me \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "X-Tenant-Id: default" | jq
 
 # 3. Todos
-curl -s http://localhost:5000/api/todos -H "Authorization: Bearer $TOKEN" | jq
+curl -s http://localhost:5000/api/todos \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "X-Tenant-Id: default" | jq
 
 # 4. Р‘РµР· С‚РѕРєРµРЅР° в†’ 401 ProblemDetails
 curl -i http://localhost:5000/api/todos
 
 # 5. User token РЅР° admin в†’ 403
-curl -i http://localhost:5000/api/admin/tenants -H "Authorization: Bearer $TOKEN"
+curl -i http://localhost:5000/api/admin/tenants \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "X-Tenant-Id: default"
 ```
 
 ### Mock login СѓРґР°Р»С‘РЅ (B-05.7)
@@ -173,3 +182,35 @@ curl -i http://localhost:5000/api/admin/tenants -H "Authorization: Bearer $TOKEN
 | JWKS | http://localhost:8180/realms/todo-platform/protocol/openid-connect/certs |
 | Issuer | `http://localhost:8180/realms/todo-platform` |
 | Expected audience | `todo-api` |
+
+---
+
+## Tenant claim (B-11.6)
+
+Authenticated API calls resolve tenant from header `X-Tenant-Id` (UUID or slug) **or** JWT claim `tenant_id`.
+
+Pipeline order in `Program.cs`:
+
+1. `UseAuthentication` — JWT is parsed so `tenant_id` is available
+2. `TenantResolutionMiddleware` — sets scoped `ITenantContext`
+3. `UseCurrentUserSync` / `UseAuthorization`
+
+Missing tenant on an authenticated request → **400**. Unknown or inactive tenant → **404**.
+
+Dev users `test@example.com` and `admin@example.com` have user attribute `tenant_id` =
+`aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa` (`default`). Client `todo-spa` maps it into access/id tokens.
+
+After changing `infra/keycloak/todo-platform-realm.json`, reimport:
+
+```bash
+docker compose rm -sf keycloak && docker compose up -d keycloak
+```
+
+Until Keycloak is reimported, send the header explicitly:
+
+```bash
+curl http://localhost:5000/api/todos \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "X-Tenant-Id: default"
+```
+

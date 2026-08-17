@@ -14,6 +14,7 @@ namespace TodoPlatform.Api.Controllers;
 
 /// <summary>
 /// Todo CRUD endpoints aligned with contracts/openapi.yaml.
+/// Authenticated callers must send <c>X-Tenant-Id</c> (UUID or slug) or JWT claim <c>tenant_id</c>.
 /// </summary>
 [ApiController]
 [Route("api/todos")]

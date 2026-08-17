@@ -46,7 +46,7 @@ public sealed class UserSyncService(
             }
             else
             {
-                user = User.CreateFromKeycloak(keycloakSub, email, name, tenantContext.TenantId);
+                user = User.CreateFromKeycloak(keycloakSub, email, name, tenantContext.RequireTenantId());
                 await users.AddAsync(user, cancellationToken);
 
                 if (user.DomainEvents.Count > 0)

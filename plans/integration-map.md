@@ -28,6 +28,30 @@ See [integration-sync.md](./integration-sync.md) for calendar and readiness gate
 
 ---
 
+## Phase 14 — Tenant headers (B-11)
+
+Backend `TenantResolutionMiddleware` is live. Angular must send `X-Tenant-Id` on every authenticated `HttpClient` request (Phase 14 interceptor). Tenant is **not** accepted in the JSON body.
+
+| | |
+|---|---|
+| Header | `X-Tenant-Id` |
+| Value | Tenant UUID **or** slug (`default`, `acme-corp`) |
+| Fallback | JWT claim `tenant_id` (Keycloak user attribute mapper on `todo-spa`) |
+| Missing (authenticated) | **400** ProblemDetails |
+| Unknown / inactive | **404** ProblemDetails |
+| Create todo | `TenantId` assigned server-side from `ITenantContext` |
+
+Dev seed tenants:
+
+| Slug | Id |
+|------|----|
+| `default` | `aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa` |
+| `acme-corp` | `bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb` |
+
+OpenAPI parameter: `components.parameters.TenantIdHeader`.
+
+---
+
 ## Admin API (implement in B-12, B-28)
 
 Documented in OpenAPI under `/admin/*`.  

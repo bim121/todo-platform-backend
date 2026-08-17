@@ -15,6 +15,8 @@
 - [x] RLS policies + FORCE on `todos` / `users` (B-11.2)
 - [x] `ITenantContext` + `TenantDbConnectionInterceptor` + Dapper SET (B-11.3)
 - [x] Middleware `TenantResolutionMiddleware` — header / JWT claim (B-11.4)
+- [x] `CreateTodo` assigns `TenantId` from `ITenantContext` (B-11.5)
+- [x] OpenAPI `X-Tenant-Id` + Keycloak `tenant_id` mapper (B-11.6)
 - [ ] EF global query filter `.HasQueryFilter(e => e.TenantId == _tenantContext.TenantId)`
 - [x] Npgsql `SET app.current_tenant` per connection for RLS
 - [x] Seed tenants: `default`, `acme-corp`
@@ -49,25 +51,25 @@
 
 ## Неделя 2 — API & middleware
 
-### B-11.4 TenantResolutionMiddleware
+### B-11.4 TenantResolutionMiddleware ✅
 
 1. Read `X-Tenant-Id` header (UUID or slug → resolve)
 2. Fallback: JWT claim `tenant_id` if present
 3. 400 if missing; 404 if tenant not found/inactive
-4. Register before auth or after — document order
+4. Register **after** `UseAuthentication` (JWT claims available), **before** `UseCurrentUserSync` / `UseAuthorization` so RLS SET applies to user lookup
 
 **Файл:** `Api/Middleware/TenantResolutionMiddleware.cs`
 
-### B-11.5 ITenantContext
+### B-11.5 ITenantContext ✅
 
 1. Scoped service set by middleware
 2. Handlers use `_tenantContext.TenantId` — remove trust of client-supplied tenant in body
 3. Update CreateTodoCommand — assign TenantId server-side
 
-### B-11.6 OpenAPI & Keycloak
+### B-11.6 OpenAPI & Keycloak ✅
 
-1. Document header `X-Tenant-Id` in OpenAPI
-2. Optional: custom mapper in Keycloak for tenant claim
+1. Document header `X-Tenant-Id` in OpenAPI (`TenantIdHeader` + Swagger operation filter)
+2. Optional: custom mapper in Keycloak for tenant claim (`todo-spa` → `tenant_id`)
 3. Update integration-map for frontend Phase 14
 
 ---

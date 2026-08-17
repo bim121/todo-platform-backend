@@ -34,6 +34,9 @@
       "firstName": "Test",
       "lastName": "User",
       "email": "test@example.com",
+      "attributes": {
+        "tenant_id": ["aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"]
+      },
       "credentials": [
         {
           "type": "password",
@@ -50,6 +53,9 @@
       "firstName": "Admin",
       "lastName": "User",
       "email": "admin@example.com",
+      "attributes": {
+        "tenant_id": ["aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"]
+      },
       "credentials": [
         {
           "type": "password",
@@ -95,6 +101,20 @@
             "included.client.audience": "todo-api",
             "id.token.claim": "false",
             "access.token.claim": "true"
+          }
+        },
+        {
+          "name": "tenant_id",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.attribute": "tenant_id",
+            "claim.name": "tenant_id",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true"
           }
         }
       ]
