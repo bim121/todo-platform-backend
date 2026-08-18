@@ -24,7 +24,7 @@
 | B-09 | [backend-phase-09-postgres-queries.md](./backend-phase-09-postgres-queries.md) | **SQL optimization I** |
 | B-10 | [backend-phase-10-complex-sql-readmodels.md](./backend-phase-10-complex-sql-readmodels.md) | **SQL II + GraphQL BFF** |
 | B-11 | [backend-phase-11-multi-tenant-isolation.md](./backend-phase-11-multi-tenant-isolation.md) | Multi-tenant RLS |
-| B-12 | [backend-phase-12-tenant-schema-versioning.md](./backend-phase-12-tenant-schema-versioning.md) | Migrations + **Admin API** |
+| B-12 | [backend-phase-12-tenant-schema-versioning.md](./backend-phase-12-tenant-schema-versioning.md) | Admin API + **schema-per-tenant DDL** |
 | B-13 | [backend-phase-13-realtime-signalr.md](./backend-phase-13-realtime-signalr.md) | SignalR realtime |
 | B-14 | [backend-phase-14-files-storage.md](./backend-phase-14-files-storage.md) | Azure Blob attachments |
 | B-15 | [backend-phase-15-search-fulltext.md](./backend-phase-15-search-fulltext.md) | Full-text search |

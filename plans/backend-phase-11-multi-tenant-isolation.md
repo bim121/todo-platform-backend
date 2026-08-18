@@ -141,7 +141,7 @@ dotnet test --filter "FullyQualifiedName~Tenant"
 |-------|----------|
 | B-11 | Frontend Phase 14 tenant headers interceptor |
 | Phase 14 | `X-Tenant-Id` on every HttpClient request |
-| B-12 | Admin manages tenants — migration tracks |
+| B-12 | Admin manages tenants — tracks **and** per-tenant Postgres schemas |
 
 См. [integration-map.md](./integration-map.md) — «B-11 → Phase 14 tenant headers».
 

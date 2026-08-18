@@ -49,9 +49,11 @@ A missed `WHERE` in Dapper still hits RLS. A cache key without tenant would leak
 
 `GET /api/admin/stats` is not tenant-scoped. Session GUC `app.bypass_rls=true` for that query only (Dapper). EF test store uses `IgnoreQueryFilters()`. Regular todo CRUD stays tenant-scoped even for `admin` role.
 
-### 4. Rejected: schema-per-tenant
+### 4. Rejected (B-11): schema-per-tenant as the *isolation* strategy
 
-Separate `tenant_acme.todos` schemas: strong isolation and independent migrations, but N× schema drift, connection routing, and FluentMigrator complexity. That path is B-12+ if a tenant needs its own track — not the default for this pet/learning platform.
+Separate `tenant_acme.todos` schemas: strong isolation and independent migrations, but N× schema drift, connection routing, and FluentMigrator complexity. For B-11 the default is shared tables + RLS.
+
+**Follow-up (B-12 week 4):** independent **DDL** per tenant is now in scope — [backend-phase-12](../../plans/backend-phase-12-tenant-schema-versioning.md) + planned **ADR-027**. Isolation of *rows* stays RLS; isolation of *schema objects* (different tables/columns per tenant) moves to `tenant_*` PostgreSQL schemas. This section is not a veto of that work.
 
 ---
 

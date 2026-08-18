@@ -1,19 +1,9 @@
 using TodoPlatform.Application.Admin.Commands.SwitchTenantTrack;
-using TodoPlatform.Application.Admin.Queries.GetTenants;
 
 namespace TodoPlatform.Application.Tests.Admin;
 
 public sealed class AdminStubHandlerTests
 {
-    [Fact]
-    public async Task GetTenantsQuery_ReturnsEmptyList()
-    {
-        var handler = new GetTenantsQueryHandler();
-        var result = await handler.Handle(new GetTenantsQuery(), CancellationToken.None);
-
-        Assert.Empty(result);
-    }
-
     [Fact]
     public async Task SwitchTenantTrack_ReturnsStubTenantWithRequestedTrack()
     {

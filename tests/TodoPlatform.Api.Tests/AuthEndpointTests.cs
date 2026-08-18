@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using TodoPlatform.Api.Extensions;
 using TodoPlatform.Api.Tests.Infrastructure;
 using TodoPlatform.Application.Dtos;
+using TodoPlatform.Domain.Tenancy;
 using TodoPlatform.Infrastructure.Persistence;
 
 namespace TodoPlatform.Api.Tests;
@@ -79,6 +80,41 @@ public sealed class AuthEndpointTests : IClassFixture<TodoPlatformWebApplication
 
         var tenants = await response.Content.ReadFromJsonAsync<List<TenantAdminDto>>();
         Assert.NotNull(tenants);
+        Assert.True(tenants.Count >= 2);
+        Assert.Contains(tenants, t => t.Id == WellKnownTenants.DefaultId.ToString()
+            && t.DeploymentTrack == "stable"
+            && t.SchemaVersion.StartsWith("V", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task GetTenantById_WithAdminRole_ReturnsSchemaVersion()
+    {
+        var adminClient = _factory.CreateAuthenticatedClient(
+            "admin@example.com",
+            "33333333-3333-3333-3333-333333333333",
+            "admin",
+            "user");
+        var response = await adminClient.GetAsync($"/api/admin/tenants/{WellKnownTenants.DefaultId}");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var tenant = await response.Content.ReadFromJsonAsync<TenantAdminDto>();
+        Assert.NotNull(tenant);
+        Assert.Equal("Default", tenant.Name);
+        Assert.Equal("stable", tenant.DeploymentTrack);
+        Assert.Equal("V011", tenant.SchemaVersion);
+    }
+
+    [Fact]
+    public async Task GetTenantById_Unknown_ReturnsNotFound()
+    {
+        var adminClient = _factory.CreateAuthenticatedClient(
+            "admin@example.com",
+            "33333333-3333-3333-3333-333333333333",
+            "admin",
+            "user");
+        var response = await adminClient.GetAsync($"/api/admin/tenants/{Guid.NewGuid()}");
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
     [Fact]

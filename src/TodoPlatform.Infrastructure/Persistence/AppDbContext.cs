@@ -28,6 +28,10 @@ public class AppDbContext : DbContext
 
     public DbSet<Tenant> Tenants => Set<Tenant>();
 
+    public DbSet<TenantSchemaVersion> TenantSchemaVersions => Set<TenantSchemaVersion>();
+
+    public DbSet<MigrationHistoryEntry> MigrationHistory => Set<MigrationHistoryEntry>();
+
     public DbSet<User> Users => Set<User>();
 
     public DbSet<Todo> Todos => Set<Todo>();

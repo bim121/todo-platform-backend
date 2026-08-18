@@ -11,7 +11,8 @@ namespace TodoPlatform.Infrastructure.Persistence;
 public sealed class DbSeeder(
     AppDbContext db,
     IPasswordHasher passwordHasher,
-    ITenantContext tenantContext)
+    ITenantContext tenantContext,
+    IMigrationPlanService migrationPlans)
 {
     public const string TestEmail = "test@example.com";
     public const string TestPassword = "password123";
@@ -19,6 +20,7 @@ public sealed class DbSeeder(
     public async Task SeedAsync(CancellationToken cancellationToken = default)
     {
         await EnsureTenantsAsync(cancellationToken);
+        await EnsureSchemaVersionsAsync(cancellationToken);
 
         tenantContext.Set(WellKnownTenants.DefaultId, WellKnownTenants.DefaultSlug);
         await ApplyTenantToOpenConnectionAsync(cancellationToken);
@@ -71,6 +73,24 @@ public sealed class DbSeeder(
             Tenant.Create(WellKnownTenants.DefaultSlug, WellKnownTenants.DefaultName, WellKnownTenants.DefaultId),
             Tenant.Create(WellKnownTenants.AcmeSlug, WellKnownTenants.AcmeName, WellKnownTenants.AcmeId));
         await db.SaveChangesAsync(cancellationToken);
+    }
+
+    private async Task EnsureSchemaVersionsAsync(CancellationToken cancellationToken)
+    {
+        var existing = await db.TenantSchemaVersions
+            .Select(v => v.TenantId)
+            .ToListAsync(cancellationToken);
+        var tenantIds = await db.Tenants.Select(t => t.Id).ToListAsync(cancellationToken);
+        var latest = migrationPlans.LatestStableVersion;
+
+        foreach (var tenantId in tenantIds.Except(existing))
+        {
+            db.TenantSchemaVersions.Add(
+                TenantSchemaVersion.Create(tenantId, MigrationTracks.Stable, latest));
+        }
+
+        if (db.ChangeTracker.HasChanges())
+            await db.SaveChangesAsync(cancellationToken);
     }
 
     private async Task ApplyTenantToOpenConnectionAsync(CancellationToken cancellationToken)

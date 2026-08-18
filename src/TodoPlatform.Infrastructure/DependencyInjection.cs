@@ -33,6 +33,7 @@ public static class DependencyInjection
         services.AddScoped<ITenantContext, TenantContext>();
         services.AddScoped<ITenantLookup, EfTenantLookup>();
         services.AddScoped<TenantDbConnectionInterceptor>();
+        services.AddSingleton<IMigrationPlanService, MigrationPlanService>();
 
         if (configuration.GetValue("Database:UseInMemory", false))
         {
@@ -49,6 +50,7 @@ public static class DependencyInjection
             services.AddScoped<ITodoStatsReadStore, EfTodoStatsReadStore>();
             services.AddScoped<ITodoFilterReadStore, EfTodoFilterReadStore>();
             services.AddScoped<ISystemStatsReadStore, EfSystemStatsReadStore>();
+            services.AddScoped<ITenantAdminReadStore, EfTenantAdminReadStore>();
         }
         else
         {
@@ -85,6 +87,7 @@ public static class DependencyInjection
             services.AddScoped<ITodoStatsReadStore, DapperTodoStatsReadStore>();
             services.AddScoped<ITodoFilterReadStore, DapperTodoFilterReadStore>();
             services.AddScoped<ISystemStatsReadStore, DapperSystemStatsReadStore>();
+            services.AddScoped<ITenantAdminReadStore, DapperTenantAdminReadStore>();
         }
 
         services.AddScoped<DbSeeder>();
