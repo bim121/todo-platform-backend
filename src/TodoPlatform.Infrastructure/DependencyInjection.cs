@@ -34,6 +34,9 @@ public static class DependencyInjection
         services.AddScoped<ITenantLookup, EfTenantLookup>();
         services.AddScoped<TenantDbConnectionInterceptor>();
         services.AddSingleton<IMigrationPlanService, MigrationPlanService>();
+        services.AddScoped<EfTenantSchemaVersionStore>();
+        services.AddScoped<ITenantSchemaVersionStore>(sp => sp.GetRequiredService<EfTenantSchemaVersionStore>());
+        services.AddScoped<ITenantMigrationRunner, LogicalTenantMigrationRunner>();
 
         if (configuration.GetValue("Database:UseInMemory", false))
         {

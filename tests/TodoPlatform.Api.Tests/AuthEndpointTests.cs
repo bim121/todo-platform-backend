@@ -78,12 +78,47 @@ public sealed class AuthEndpointTests : IClassFixture<TodoPlatformWebApplication
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-        var tenants = await response.Content.ReadFromJsonAsync<List<TenantAdminDto>>();
+        var tenants = await response.Content.ReadFromJsonAsync<PagedResult<TenantAdminDto>>();
         Assert.NotNull(tenants);
-        Assert.True(tenants.Count >= 2);
-        Assert.Contains(tenants, t => t.Id == WellKnownTenants.DefaultId.ToString()
+        Assert.True(tenants.TotalCount >= 2);
+        Assert.Contains(tenants.Items, t => t.Id == WellKnownTenants.DefaultId.ToString()
             && t.DeploymentTrack == "stable"
             && t.SchemaVersion.StartsWith("V", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task GetMigrationPlan_WithAdminRole_ReturnsPlan()
+    {
+        var adminClient = _factory.CreateAuthenticatedClient(
+            "admin@example.com",
+            "33333333-3333-3333-3333-333333333333",
+            "admin",
+            "user");
+        var response = await adminClient.GetAsync(
+            $"/api/admin/tenants/{WellKnownTenants.DefaultId}/migration-plan");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var plan = await response.Content.ReadFromJsonAsync<MigrationPlanDto>();
+        Assert.NotNull(plan);
+        Assert.Equal("V011", plan.CurrentVersion);
+        Assert.Equal("stable", plan.Track);
+        Assert.Empty(plan.Pending);
+    }
+
+    [Fact]
+    public async Task ApplyMigration_StableAtLatest_ReturnsConflict()
+    {
+        var adminClient = _factory.CreateAuthenticatedClient(
+            "admin@example.com",
+            "33333333-3333-3333-3333-333333333333",
+            "admin",
+            "user");
+        var response = await adminClient.PostAsJsonAsync(
+            $"/api/admin/tenants/{WellKnownTenants.DefaultId}/migrations/apply",
+            new ApplyTenantMigrationRequest());
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+        Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
     }
 
     [Fact]

@@ -1,6 +1,8 @@
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using TodoPlatform.Application.Admin.Commands.ApplyTenantMigration;
+using TodoPlatform.Application.Admin.Queries.GetMigrationPlan;
 using TodoPlatform.Application.Admin.Queries.GetSystemStats;
 using TodoPlatform.Application.Admin.Queries.GetTenantById;
 using TodoPlatform.Application.Admin.Queries.GetTenants;
@@ -18,17 +20,24 @@ namespace TodoPlatform.Api.Controllers;
 public sealed class AdminController(IMediator mediator) : ControllerBase
 {
     /// <summary>
-    /// List all tenants with logical schema version and track (admin only).
+    /// List tenants with logical schema version and track (admin only). Supports skip/take and track/status filters.
     /// </summary>
     [HttpGet("tenants")]
-    [ProducesResponseType(typeof(IReadOnlyList<TenantAdminDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(PagedResult<TenantAdminDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<IReadOnlyList<TenantAdminDto>>> GetTenants(
-        CancellationToken cancellationToken)
+    public async Task<ActionResult<PagedResult<TenantAdminDto>>> GetTenants(
+        [FromQuery] int skip = 0,
+        [FromQuery] int take = 20,
+        [FromQuery] string? track = null,
+        [FromQuery] string? status = null,
+        CancellationToken cancellationToken = default)
     {
-        var tenants = await mediator.Send(new GetTenantsQuery(), cancellationToken);
-        return Ok(tenants);
+        var page = await mediator.Send(
+            new GetTenantsQuery(skip, take, track, status),
+            cancellationToken);
+        return Ok(page);
     }
 
     /// <summary>
@@ -44,6 +53,44 @@ public sealed class AdminController(IMediator mediator) : ControllerBase
         CancellationToken cancellationToken)
     {
         var tenant = await mediator.Send(new GetTenantByIdQuery(id), cancellationToken);
+        return Ok(tenant);
+    }
+
+    /// <summary>
+    /// Pending migrations for the tenant's track (B-12.6).
+    /// </summary>
+    [HttpGet("tenants/{id:guid}/migration-plan")]
+    [ProducesResponseType(typeof(MigrationPlanDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<MigrationPlanDto>> GetMigrationPlan(
+        Guid id,
+        CancellationToken cancellationToken)
+    {
+        var plan = await mediator.Send(new GetMigrationPlanQuery(id), cancellationToken);
+        return Ok(plan);
+    }
+
+    /// <summary>
+    /// Apply the next pending migration (or the given next target) for a tenant (B-12.5).
+    /// Week 2: logical version + history only.
+    /// </summary>
+    [HttpPost("tenants/{id:guid}/migrations/apply")]
+    [ProducesResponseType(typeof(TenantAdminDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<TenantAdminDto>> ApplyMigration(
+        Guid id,
+        [FromBody] ApplyTenantMigrationRequest? body,
+        CancellationToken cancellationToken)
+    {
+        var tenant = await mediator.Send(
+            new ApplyTenantMigrationCommand(id, body?.TargetVersion),
+            cancellationToken);
         return Ok(tenant);
     }
 

@@ -11,23 +11,32 @@ namespace TodoPlatform.Application.Tests.Admin;
 public sealed class GetTenantsQueryHandlerTests
 {
     [Fact]
-    public async Task Handle_ReturnsStoreList()
+    public async Task Handle_ReturnsStorePage()
     {
-        IReadOnlyList<TenantAdminDto> expected =
-        [
-            new(
-                WellKnownTenants.DefaultId.ToString(),
-                "Default",
-                "V011",
-                "stable",
-                "1.0.0",
-                "active")
-        ];
+        var expected = new PagedResult<TenantAdminDto>(
+            [
+                new(
+                    WellKnownTenants.DefaultId.ToString(),
+                    "Default",
+                    "V011",
+                    "stable",
+                    "1.0.0",
+                    "active")
+            ],
+            TotalCount: 1,
+            Skip: 0,
+            Take: 20);
+
         var store = new Mock<ITenantAdminReadStore>();
-        store.Setup(s => s.ListAsync(It.IsAny<CancellationToken>())).ReturnsAsync(expected);
+        store.Setup(s => s.ListAsync(
+                It.Is<TenantAdminListFilter>(f => f.Skip == 0 && f.Take == 20 && f.Track == "stable"),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(expected);
 
         var handler = new GetTenantsQueryHandler(store.Object);
-        var result = await handler.Handle(new GetTenantsQuery(), CancellationToken.None);
+        var result = await handler.Handle(
+            new GetTenantsQuery(Track: "stable"),
+            CancellationToken.None);
 
         Assert.Equal(expected, result);
     }

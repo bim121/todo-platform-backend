@@ -17,6 +17,8 @@ public sealed class OpenApiContractTests(OpenApiWebApplicationFactory factory)
         "/api/todos/{id}",
         "/api/admin/tenants",
         "/api/admin/tenants/{id}",
+        "/api/admin/tenants/{id}/migration-plan",
+        "/api/admin/tenants/{id}/migrations/apply",
         "/api/admin/stats",
         "/api/Health"
     ];

@@ -15,13 +15,13 @@
 
 - [x] Tables `tenant_schema_versions`, `migration_history` (B-12.1; migration **V011**)
 - [x] `GET /admin/tenants`, `GET /admin/tenants/{id}` — OpenAPI
-- [ ] `GET /admin/tenants/{id}/migration-plan`
-- [ ] `POST /admin/tenants/{id}/migrations/apply` — `ApplyTenantMigrationCommand` (**DDL в схеме tenant’а**, не только bump версии)
+- [x] `GET /admin/tenants/{id}/migration-plan`
+- [x] `POST /admin/tenants/{id}/migrations/apply` — `ApplyTenantMigrationCommand` (week 2: logical bump + history; DDL in tenant schema → B-12.12)
 - [x] `GetTenantsQuery`, `GetTenantByIdQuery` handlers (B-12.3)
 - [x] Track per tenant: `stable` | `beta` — determines pending migrations (`IMigrationPlanService`)
 - [x] FluentMigrator tagged migrations `@Tags("beta")` demo (`V012`)
 - [x] Admin-only `[Authorize(Roles = "admin")]`
-- [ ] Audit log row on each apply
+- [x] Audit log row on each apply (week 2 logical; domain event `TenantMigrationAppliedEvent`)
 - [ ] **ADR-027** — hybrid: `public` = каталог платформы, `tenant_*` = данные tenant’а
 - [ ] Postgres schema per tenant + `search_path` на запросе
 - [ ] Apply V012-beta к одному tenant → таблица есть только в его схеме
@@ -56,7 +56,7 @@
 
 ## Неделя 2 — Admin API endpoints
 
-### B-12.4 AdminController
+### B-12.4 AdminController ✅
 
 1. Route prefix `/admin/tenants`
 2. Pagination, filter by track/status
@@ -64,17 +64,17 @@
 
 **OpenAPI sync:** [`contracts/openapi.yaml`](../../contracts/openapi.yaml)
 
-### B-12.5 ApplyTenantMigrationCommand
+### B-12.5 ApplyTenantMigrationCommand ✅ (logical week 2)
 
-Неделя 2 — контракт API + lock + history. Реальный DDL — после B-12.12 (неделя 4). Нельзя считать apply готовым, пока он только bump’ает `CurrentVersion`.
+Неделя 2 — контракт API + lock + history. Реальный DDL — после B-12.12 (неделя 4). Нельзя считать apply готовым для schema-per-tenant, пока нет `ITenantMigrationRunner` DDL.
 
 1. Input: TenantId, TargetVersion (optional — next pending on that tenant’s track)
 2. Handler: `SELECT … FOR UPDATE` на `tenant_schema_versions`, затем `ITenantMigrationRunner.ApplyAsync(tenantId, target)`
-3. Runner выполняет **следующий pending шаг в схеме этого tenant’а** (FluentMigrator `MigrateUp` с `search_path` / `VersionInfo` внутри `tenant_*`)
+3. Runner (week 2 `LogicalTenantMigrationRunner`): один pending шаг → bump + `migration_history` (без FluentMigrator на `public`)
 4. Успех: bump `CurrentVersion`, insert `migration_history`, domain event
 5. Платформенный `MigrateUp` при старте API **не** накатывает tenant-tagged / tenant-stream шаги на `public`
 
-### B-12.6 GetMigrationPlanQuery
+### B-12.6 GetMigrationPlanQuery ✅
 
 1. Returns `{ currentVersion, track, pending: [{ version, description, tags }] }`
 2. Used by frontend Admin migration UI

@@ -29,4 +29,15 @@ public class TenantSchemaVersion
             UpdatedAt = DateTimeOffset.UtcNow
         };
     }
+
+    /// <summary>Bump logical schema version after a successful apply (B-12.5).</summary>
+    public void ApplyVersion(long version)
+    {
+        if (version <= CurrentVersion)
+            throw new InvalidOperationException(
+                $"Cannot apply version {version}: tenant is already at {CurrentVersion}.");
+
+        CurrentVersion = version;
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
 }

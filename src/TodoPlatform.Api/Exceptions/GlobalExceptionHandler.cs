@@ -46,6 +46,11 @@ public sealed class GlobalExceptionHandler(
                 "Not Found",
                 notFound.Message,
                 null),
+            ConflictException conflict => (
+                StatusCodes.Status409Conflict,
+                "Conflict",
+                conflict.Message,
+                null),
             ValidationException validation => (
                 StatusCodes.Status400BadRequest,
                 "Validation Error",

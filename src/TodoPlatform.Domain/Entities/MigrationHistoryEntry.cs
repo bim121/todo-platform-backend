@@ -1,4 +1,5 @@
 using TodoPlatform.Domain.Common;
+using TodoPlatform.Domain.Events;
 
 namespace TodoPlatform.Domain.Entities;
 
@@ -24,12 +25,17 @@ public class MigrationHistoryEntry : Entity
         if (string.IsNullOrWhiteSpace(appliedBy))
             throw new ArgumentException("Applied-by is required.", nameof(appliedBy));
 
-        return new MigrationHistoryEntry
+        var entry = new MigrationHistoryEntry
         {
             TenantId = tenantId,
             Version = version.Trim(),
             AppliedAt = DateTimeOffset.UtcNow,
             AppliedBy = appliedBy.Trim()
         };
+
+        entry.RaiseDomainEvent(
+            new TenantMigrationAppliedEvent(entry.TenantId, entry.Version, entry.AppliedBy));
+
+        return entry;
     }
 }

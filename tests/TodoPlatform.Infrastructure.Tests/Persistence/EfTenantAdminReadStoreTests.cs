@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using TodoPlatform.Application.Interfaces;
 using TodoPlatform.Domain.Entities;
 using TodoPlatform.Domain.Tenancy;
 using TodoPlatform.Infrastructure.Migrations;
@@ -24,10 +25,11 @@ public sealed class EfTenantAdminReadStoreTests
         await db.SaveChangesAsync();
 
         var store = new EfTenantAdminReadStore(db, plans);
-        var list = await store.ListAsync();
+        var list = await store.ListAsync(new TenantAdminListFilter());
 
-        Assert.Equal(2, list.Count);
-        var defaultTenant = Assert.Single(list, t => t.Id == WellKnownTenants.DefaultId.ToString());
+        Assert.Equal(2, list.TotalCount);
+        Assert.Equal(2, list.Items.Count);
+        var defaultTenant = Assert.Single(list.Items, t => t.Id == WellKnownTenants.DefaultId.ToString());
         Assert.Equal("Default", defaultTenant.Name);
         Assert.Equal("V011", defaultTenant.SchemaVersion);
         Assert.Equal(MigrationTracks.Stable, defaultTenant.DeploymentTrack);

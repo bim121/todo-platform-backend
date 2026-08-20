@@ -10,13 +10,48 @@ public sealed class EfTenantAdminReadStore(
     AppDbContext db,
     IMigrationPlanService plans) : ITenantAdminReadStore
 {
-    public async Task<IReadOnlyList<TenantAdminDto>> ListAsync(CancellationToken cancellationToken = default)
+    public async Task<PagedResult<TenantAdminDto>> ListAsync(
+        TenantAdminListFilter filter,
+        CancellationToken cancellationToken = default)
     {
-        var tenants = await db.Tenants.AsNoTracking().OrderBy(t => t.Name).ToListAsync(cancellationToken);
+        var tenants = await db.Tenants.AsNoTracking().ToListAsync(cancellationToken);
         var versions = await db.TenantSchemaVersions.AsNoTracking()
             .ToDictionaryAsync(v => v.TenantId, cancellationToken);
 
-        return tenants.Select(t => Map(t.Id, t.Name, t.Status.ToString(), versions)).ToList();
+        IEnumerable<(Domain.Entities.Tenant Tenant, Domain.Entities.TenantSchemaVersion? Version)> joined =
+            tenants.Select(t =>
+            {
+                versions.TryGetValue(t.Id, out var version);
+                return (t, version);
+            });
+
+        if (!string.IsNullOrWhiteSpace(filter.Track))
+        {
+            joined = joined.Where(x =>
+                string.Equals(
+                    x.Version?.Track ?? MigrationTracks.Stable,
+                    filter.Track.Trim(),
+                    StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (!string.IsNullOrWhiteSpace(filter.Status))
+        {
+            joined = joined.Where(x =>
+                string.Equals(
+                    x.Tenant.Status.ToString(),
+                    filter.Status.Trim(),
+                    StringComparison.OrdinalIgnoreCase));
+        }
+
+        var filtered = joined.OrderBy(x => x.Tenant.Name).ToList();
+        var total = filtered.Count;
+        var page = filtered
+            .Skip(filter.Skip)
+            .Take(filter.Take)
+            .Select(x => Map(x.Tenant.Id, x.Tenant.Name, x.Tenant.Status.ToString(), x.Version))
+            .ToList();
+
+        return new PagedResult<TenantAdminDto>(page, total, filter.Skip, filter.Take);
     }
 
     public async Task<TenantAdminDto?> GetByIdAsync(
@@ -28,25 +63,22 @@ public sealed class EfTenantAdminReadStore(
         if (tenant is null)
             return null;
 
-        var versions = await db.TenantSchemaVersions.AsNoTracking()
-            .ToDictionaryAsync(v => v.TenantId, cancellationToken);
+        var version = await db.TenantSchemaVersions.AsNoTracking()
+            .FirstOrDefaultAsync(v => v.TenantId == tenantId, cancellationToken);
 
-        return Map(tenant.Id, tenant.Name, tenant.Status.ToString(), versions);
+        return Map(tenant.Id, tenant.Name, tenant.Status.ToString(), version);
     }
 
     private TenantAdminDto Map(
         Guid id,
         string name,
         string status,
-        IReadOnlyDictionary<Guid, Domain.Entities.TenantSchemaVersion> versions)
-    {
-        versions.TryGetValue(id, out var version);
-        return TenantAdminMapper.ToDto(
+        Domain.Entities.TenantSchemaVersion? version) =>
+        TenantAdminMapper.ToDto(
             id.ToString(),
             name,
             version?.CurrentVersion ?? 0,
             version?.Track ?? MigrationTracks.Stable,
             status,
             plans);
-    }
 }
