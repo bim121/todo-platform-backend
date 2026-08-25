@@ -46,6 +46,22 @@ public sealed class DomainEventToIntegrationEventMapperTests
     }
 
     [Fact]
+    public void Map_TenantMigrationAppliedEvent_ReturnsEnvelope()
+    {
+        var tenantId = Guid.NewGuid();
+        var domainEvent = new TenantMigrationAppliedEvent(tenantId, "V012-beta-feature", "admin@test");
+
+        var envelope = _sut.Map(domainEvent);
+
+        Assert.NotNull(envelope);
+        Assert.Equal(TenantMigrationAppliedIntegrationEvent.EventTypeName, envelope.Type);
+        var data = Assert.IsType<TenantMigrationAppliedIntegrationEvent>(envelope.Data);
+        Assert.Equal(tenantId, data.TenantId);
+        Assert.Equal("V012-beta-feature", data.Version);
+        Assert.Equal("admin@test", data.AppliedBy);
+    }
+
+    [Fact]
     public void Map_UnknownDomainEvent_ReturnsNull()
     {
         var domainEvent = new TodoDeletedEvent(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid());

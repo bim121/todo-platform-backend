@@ -43,5 +43,6 @@ public sealed class EfTenantSchemaVersionStore(AppDbContext db) : ITenantSchemaV
         new(
             row.TenantId,
             string.IsNullOrWhiteSpace(row.Track) ? MigrationTracks.Stable : row.Track,
-            row.CurrentVersion);
+            row.CurrentVersion,
+            row.UpdatedAt);
 }

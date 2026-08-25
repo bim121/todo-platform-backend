@@ -37,6 +37,7 @@ public static class DependencyInjection
         services.AddScoped<EfTenantSchemaVersionStore>();
         services.AddScoped<ITenantSchemaVersionStore>(sp => sp.GetRequiredService<EfTenantSchemaVersionStore>());
         services.AddScoped<ITenantMigrationRunner, LogicalTenantMigrationRunner>();
+        services.AddScoped<ITenantMigrationCompatibilityValidator, TenantMigrationCompatibilityValidator>();
 
         if (configuration.GetValue("Database:UseInMemory", false))
         {

@@ -1,5 +1,6 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using TodoPlatform.Application.Admin.Commands.ApplyTenantMigration;
 using TodoPlatform.Application.Common;
 using TodoPlatform.Application.Interfaces;
 using TodoPlatform.Infrastructure.Persistence;
@@ -17,6 +18,9 @@ public sealed class TransactionBehavior<TRequest, TResponse>(
         RequestHandlerDelegate<TResponse> next,
         CancellationToken cancellationToken)
     {
+        if (request is ApplyTenantMigrationCommand { DryRun: true })
+            return await next();
+
         if (request is not ICommand)
             return await next();
 

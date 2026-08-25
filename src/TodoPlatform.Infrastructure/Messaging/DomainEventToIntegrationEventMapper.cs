@@ -27,6 +27,15 @@ public sealed class DomainEventToIntegrationEventMapper : IDomainEventToIntegrat
                     completed.UserId,
                     completed.OccurredOn),
                 OccurredOn: completed.OccurredOn),
+            TenantMigrationAppliedEvent applied => new IntegrationEventEnvelope(
+                Type: TenantMigrationAppliedIntegrationEvent.EventTypeName,
+                Version: IntegrationEventEnvelope.CurrentVersion,
+                Data: new TenantMigrationAppliedIntegrationEvent(
+                    applied.TenantId,
+                    applied.Version,
+                    applied.AppliedBy,
+                    applied.OccurredOn),
+                OccurredOn: applied.OccurredOn),
             _ => null
         };
 }

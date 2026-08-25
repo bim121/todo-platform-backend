@@ -8,26 +8,38 @@ using TodoPlatform.Application.Services;
 namespace TodoPlatform.Application.Admin.Commands.ApplyTenantMigration;
 
 /// <summary>
-/// Apply next (or explicit next) pending migration for a tenant (B-12.5).
-/// Week 2: logical version + history; DDL in tenant schema is B-12.12.
+/// Apply next (or explicit next) pending migration for a tenant (B-12.5 / B-12.7).
 /// </summary>
 public sealed record ApplyTenantMigrationCommand(
     Guid TenantId,
-    long? TargetVersion = null) : IRequest<TenantAdminDto>, ICommand;
+    long? TargetVersion = null,
+    DateTimeOffset? ExpectedUpdatedAt = null,
+    bool DryRun = false) : IRequest<ApplyTenantMigrationResponse>, ICommand;
 
 public sealed class ApplyTenantMigrationHandler(
     ITenantAdminReadStore tenants,
     ITenantMigrationRunner runner,
     ICurrentUserService currentUser)
-    : IRequestHandler<ApplyTenantMigrationCommand, TenantAdminDto>
+    : IRequestHandler<ApplyTenantMigrationCommand, ApplyTenantMigrationResponse>
 {
-    public async Task<TenantAdminDto> Handle(
+    public async Task<ApplyTenantMigrationResponse> Handle(
         ApplyTenantMigrationCommand request,
         CancellationToken cancellationToken)
     {
         var existing = await tenants.GetByIdAsync(request.TenantId, cancellationToken);
         if (existing is null)
             throw new NotFoundException($"Tenant '{request.TenantId}' was not found.");
+
+        if (request.DryRun)
+        {
+            var preview = await runner.PreviewAsync(
+                request.TenantId,
+                request.TargetVersion,
+                request.ExpectedUpdatedAt,
+                cancellationToken);
+
+            return new ApplyTenantMigrationResponse(DryRun: true, Tenant: null, Preview: preview);
+        }
 
         var appliedBy = currentUser.Email
             ?? currentUser.KeycloakSub
@@ -38,12 +50,15 @@ public sealed class ApplyTenantMigrationHandler(
             request.TenantId,
             request.TargetVersion,
             appliedBy,
+            request.ExpectedUpdatedAt,
             cancellationToken);
 
-        return existing with
+        var tenant = existing with
         {
             SchemaVersion = result.SchemaVersionLabel,
             DeploymentTrack = result.Track
         };
+
+        return new ApplyTenantMigrationResponse(DryRun: false, Tenant: tenant, Preview: null);
     }
 }

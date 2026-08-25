@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using TodoPlatform.Application.Exceptions;
 
 namespace TodoPlatform.Api.Exceptions;
@@ -56,6 +57,11 @@ public sealed class GlobalExceptionHandler(
                 "Validation Error",
                 validation.Message,
                 validation.Errors),
+            DbUpdateConcurrencyException => (
+                StatusCodes.Status409Conflict,
+                "Conflict",
+                "Tenant schema version was modified by another operation. Reload and retry.",
+                null),
             _ => (
                 StatusCodes.Status500InternalServerError,
                 "An error occurred",

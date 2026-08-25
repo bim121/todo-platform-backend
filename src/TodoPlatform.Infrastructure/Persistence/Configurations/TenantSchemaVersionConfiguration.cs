@@ -20,7 +20,8 @@ public sealed class TenantSchemaVersionConfiguration : IEntityTypeConfiguration<
             .IsRequired();
 
         builder.Property(v => v.UpdatedAt)
-            .IsRequired();
+            .IsRequired()
+            .IsConcurrencyToken();
 
         builder.HasOne<Tenant>()
             .WithMany()

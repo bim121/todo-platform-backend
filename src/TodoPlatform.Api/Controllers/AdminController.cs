@@ -73,25 +73,29 @@ public sealed class AdminController(IMediator mediator) : ControllerBase
     }
 
     /// <summary>
-    /// Apply the next pending migration (or the given next target) for a tenant (B-12.5).
-    /// Week 2: logical version + history only.
+    /// Apply the next pending migration (or preview with <c>?dryRun=true</c>) for a tenant (B-12.5 / B-12.7).
     /// </summary>
     [HttpPost("tenants/{id:guid}/migrations/apply")]
-    [ProducesResponseType(typeof(TenantAdminDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApplyTenantMigrationResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
-    public async Task<ActionResult<TenantAdminDto>> ApplyMigration(
+    public async Task<ActionResult<ApplyTenantMigrationResponse>> ApplyMigration(
         Guid id,
-        [FromBody] ApplyTenantMigrationRequest? body,
-        CancellationToken cancellationToken)
+        [FromQuery] bool dryRun = false,
+        [FromBody] ApplyTenantMigrationRequest? body = null,
+        CancellationToken cancellationToken = default)
     {
-        var tenant = await mediator.Send(
-            new ApplyTenantMigrationCommand(id, body?.TargetVersion),
+        var result = await mediator.Send(
+            new ApplyTenantMigrationCommand(
+                id,
+                body?.TargetVersion,
+                body?.ExpectedUpdatedAt,
+                dryRun),
             cancellationToken);
-        return Ok(tenant);
+        return Ok(result);
     }
 
     /// <summary>

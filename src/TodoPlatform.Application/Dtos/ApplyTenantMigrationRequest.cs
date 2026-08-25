@@ -1,7 +1,8 @@
 namespace TodoPlatform.Application.Dtos;
 
 /// <summary>
-/// Optional target version for <c>POST .../migrations/apply</c>.
-/// Omit to apply the next pending step on the tenant's track.
+/// Optional apply parameters for <c>POST .../migrations/apply</c>.
 /// </summary>
-public sealed record ApplyTenantMigrationRequest(long? TargetVersion = null);
+public sealed record ApplyTenantMigrationRequest(
+    long? TargetVersion = null,
+    DateTimeOffset? ExpectedUpdatedAt = null);

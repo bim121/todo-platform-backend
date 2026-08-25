@@ -1,3 +1,5 @@
+using TodoPlatform.Application.Dtos;
+
 namespace TodoPlatform.Application.Interfaces;
 
 /// <summary>
@@ -11,6 +13,13 @@ public interface ITenantMigrationRunner
         Guid tenantId,
         long? targetVersion,
         string appliedBy,
+        DateTimeOffset? expectedUpdatedAt = null,
+        CancellationToken cancellationToken = default);
+
+    Task<MigrationApplyPreviewDto> PreviewAsync(
+        Guid tenantId,
+        long? targetVersion,
+        DateTimeOffset? expectedUpdatedAt = null,
         CancellationToken cancellationToken = default);
 }
 

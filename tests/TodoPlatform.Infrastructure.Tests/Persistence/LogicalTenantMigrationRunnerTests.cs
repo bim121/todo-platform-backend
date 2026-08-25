@@ -14,29 +14,25 @@ public sealed class LogicalTenantMigrationRunnerTests
     public async Task ApplyAsync_StableTenant_ConflictsWhenNoPending()
     {
         await using var db = await SeedAsync(MigrationTracks.Stable, currentVersion: 11);
-        var plans = new MigrationPlanService();
-        var versions = new EfTenantSchemaVersionStore(db);
-        var runner = new LogicalTenantMigrationRunner(db, versions, plans);
+        var runner = CreateRunner(db);
 
         var ex = await Assert.ThrowsAsync<ConflictException>(() =>
-            runner.ApplyAsync(WellKnownTenants.DefaultId, null, "admin@test", CancellationToken.None));
+            runner.ApplyAsync(WellKnownTenants.DefaultId, null, "admin@test", cancellationToken: CancellationToken.None));
 
         Assert.Contains("no pending", ex.Message, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
-    public async Task ApplyAsync_BetaTenant_BumpsToV012AndWritesHistory()
+    public async Task ApplyAsync_BetaTenantWithoutTodos_BumpsToV012AndWritesHistory()
     {
-        await using var db = await SeedAsync(MigrationTracks.Beta, currentVersion: 11);
-        var plans = new MigrationPlanService();
-        var versions = new EfTenantSchemaVersionStore(db);
-        var runner = new LogicalTenantMigrationRunner(db, versions, plans);
+        await using var db = await SeedAsync(MigrationTracks.Beta, currentVersion: 11, seedTodos: false);
+        var runner = CreateRunner(db);
 
         var result = await runner.ApplyAsync(
             WellKnownTenants.DefaultId,
             targetVersion: 12,
             appliedBy: "admin@test",
-            CancellationToken.None);
+            cancellationToken: CancellationToken.None);
         await db.SaveChangesAsync();
 
         Assert.Equal(12, result.AppliedVersion);
@@ -52,28 +48,76 @@ public sealed class LogicalTenantMigrationRunnerTests
     }
 
     [Fact]
-    public async Task ApplyAsync_WrongTarget_ThrowsConflict()
+    public async Task ApplyAsync_BetaWithTodos_ThrowsIncompatibleConflict()
     {
-        await using var db = await SeedAsync(MigrationTracks.Beta, currentVersion: 11);
-        var runner = new LogicalTenantMigrationRunner(
-            db,
-            new EfTenantSchemaVersionStore(db),
-            new MigrationPlanService());
+        await using var db = await SeedAsync(MigrationTracks.Beta, currentVersion: 11, seedTodos: true);
+        var runner = CreateRunner(db);
 
-        await Assert.ThrowsAsync<ConflictException>(() =>
-            runner.ApplyAsync(WellKnownTenants.DefaultId, targetVersion: 99, "admin", CancellationToken.None));
+        var ex = await Assert.ThrowsAsync<ConflictException>(() =>
+            runner.ApplyAsync(WellKnownTenants.DefaultId, null, "admin", cancellationToken: CancellationToken.None));
+
+        Assert.Contains("incompatible", ex.Message, StringComparison.OrdinalIgnoreCase);
     }
 
-    private static async Task<AppDbContext> SeedAsync(string track, long currentVersion)
+    [Fact]
+    public async Task PreviewAsync_DryRun_ReturnsWouldApplyWithoutPersisting()
+    {
+        await using var db = await SeedAsync(MigrationTracks.Beta, currentVersion: 11, seedTodos: false);
+        var runner = CreateRunner(db);
+
+        var preview = await runner.PreviewAsync(WellKnownTenants.DefaultId, null, cancellationToken: CancellationToken.None);
+
+        Assert.True(preview.DryRun);
+        Assert.NotNull(preview.WouldApply);
+        Assert.Equal(12, preview.WouldApply!.Version);
+        Assert.Equal(11, (await db.TenantSchemaVersions.SingleAsync()).CurrentVersion);
+    }
+
+    [Fact]
+    public async Task ApplyAsync_StaleExpectedUpdatedAt_ThrowsConflict()
+    {
+        await using var db = await SeedAsync(MigrationTracks.Beta, currentVersion: 11, seedTodos: false);
+        var runner = CreateRunner(db);
+        var stale = DateTimeOffset.Parse("2019-01-01T00:00:00Z");
+
+        await Assert.ThrowsAsync<ConflictException>(() =>
+            runner.ApplyAsync(
+                WellKnownTenants.DefaultId,
+                null,
+                "admin",
+                expectedUpdatedAt: stale,
+                CancellationToken.None));
+    }
+
+    private static LogicalTenantMigrationRunner CreateRunner(AppDbContext db) =>
+        new(
+            db,
+            new EfTenantSchemaVersionStore(db),
+            new MigrationPlanService(),
+            new TenantMigrationCompatibilityValidator(db));
+
+    private static async Task<AppDbContext> SeedAsync(
+        string track,
+        long currentVersion,
+        bool seedTodos = false)
     {
         var options = new DbContextOptionsBuilder<AppDbContext>()
             .UseInMemoryDatabase(Guid.NewGuid().ToString())
             .Options;
         var db = new AppDbContext(options);
+        var tenantId = WellKnownTenants.DefaultId;
         db.Tenants.Add(
-            Tenant.Create(WellKnownTenants.DefaultSlug, WellKnownTenants.DefaultName, WellKnownTenants.DefaultId));
+            Tenant.Create(WellKnownTenants.DefaultSlug, WellKnownTenants.DefaultName, tenantId));
         db.TenantSchemaVersions.Add(
-            TenantSchemaVersion.Create(WellKnownTenants.DefaultId, track, currentVersion));
+            TenantSchemaVersion.Create(tenantId, track, currentVersion));
+
+        if (seedTodos)
+        {
+            var user = User.Register("u@test.com", "hash", "U", tenantId);
+            db.Users.Add(user);
+            db.Todos.Add(Todo.Create("seed", user.Id, tenantId: tenantId));
+        }
+
         await db.SaveChangesAsync();
         return db;
     }

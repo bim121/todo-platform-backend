@@ -23,6 +23,8 @@ public static class IntegrationEventPayloadDeserializer
                 dataElement.Deserialize<TodoCreatedIntegrationEvent>(SerializerOptions),
             TodoCompletedIntegrationEvent.EventTypeName =>
                 dataElement.Deserialize<TodoCompletedIntegrationEvent>(SerializerOptions),
+            TenantMigrationAppliedIntegrationEvent.EventTypeName =>
+                dataElement.Deserialize<TenantMigrationAppliedIntegrationEvent>(SerializerOptions),
             _ => null
         };
     }

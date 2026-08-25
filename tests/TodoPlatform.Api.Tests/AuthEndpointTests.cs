@@ -10,6 +10,7 @@ using TodoPlatform.Infrastructure.Persistence;
 
 namespace TodoPlatform.Api.Tests;
 
+[Collection(nameof(TodoPlatformWebApplicationFactory))]
 public sealed class AuthEndpointTests : IClassFixture<TodoPlatformWebApplicationFactory>, IAsyncLifetime
 {
     private readonly TodoPlatformWebApplicationFactory _factory;
@@ -21,6 +22,8 @@ public sealed class AuthEndpointTests : IClassFixture<TodoPlatformWebApplication
     public async Task InitializeAsync()
     {
         await _factory.EnsureDatabaseSeededAsync();
+        await AdminTestData.ResetTenantSchemaAsync(_factory.Services, WellKnownTenants.DefaultId, MigrationTracks.Stable);
+        await AdminTestData.ResetTenantSchemaAsync(_factory.Services, WellKnownTenants.AcmeId, MigrationTracks.Stable);
         _seedUserId = await _factory.GetTestUserIdAsync();
         _userClient = _factory.CreateAuthenticatedClient();
     }
@@ -89,6 +92,11 @@ public sealed class AuthEndpointTests : IClassFixture<TodoPlatformWebApplication
     [Fact]
     public async Task GetMigrationPlan_WithAdminRole_ReturnsPlan()
     {
+        await AdminTestData.ResetTenantSchemaAsync(
+            _factory.Services,
+            WellKnownTenants.DefaultId,
+            MigrationTracks.Stable);
+
         var adminClient = _factory.CreateAuthenticatedClient(
             "admin@example.com",
             "33333333-3333-3333-3333-333333333333",
@@ -108,6 +116,11 @@ public sealed class AuthEndpointTests : IClassFixture<TodoPlatformWebApplication
     [Fact]
     public async Task ApplyMigration_StableAtLatest_ReturnsConflict()
     {
+        await AdminTestData.ResetTenantSchemaAsync(
+            _factory.Services,
+            WellKnownTenants.DefaultId,
+            MigrationTracks.Stable);
+
         var adminClient = _factory.CreateAuthenticatedClient(
             "admin@example.com",
             "33333333-3333-3333-3333-333333333333",

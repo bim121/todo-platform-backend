@@ -10,6 +10,7 @@ public static class MessagingExtensions
 {
     public const string TodoCreatedEmailEndpoint = "todo-created-email";
     public const string TodoCompletedNotificationEndpoint = "todo-completed-notification";
+    public const string TenantMigrationAppliedNotificationEndpoint = "tenant-migration-applied-notification";
 
     public static IServiceCollection AddApiMessaging(
         this IServiceCollection services,
@@ -30,6 +31,7 @@ public static class MessagingExtensions
         {
             bus.AddConsumer<SendTodoCreatedEmailConsumer>();
             bus.AddConsumer<TodoCompletedNotificationConsumer>();
+            bus.AddConsumer<TenantMigrationAppliedNotificationConsumer>();
 
             bus.UsingRabbitMq((context, cfg) =>
             {
@@ -49,6 +51,12 @@ public static class MessagingExtensions
                 {
                     ConfigureRetry(e);
                     e.ConfigureConsumer<TodoCompletedNotificationConsumer>(context);
+                });
+
+                cfg.ReceiveEndpoint(TenantMigrationAppliedNotificationEndpoint, e =>
+                {
+                    ConfigureRetry(e);
+                    e.ConfigureConsumer<TenantMigrationAppliedNotificationConsumer>(context);
                 });
             });
         });

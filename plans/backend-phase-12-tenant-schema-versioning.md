@@ -22,7 +22,7 @@
 - [x] FluentMigrator tagged migrations `@Tags("beta")` demo (`V012`)
 - [x] Admin-only `[Authorize(Roles = "admin")]`
 - [x] Audit log row on each apply (week 2 logical; domain event `TenantMigrationAppliedEvent`)
-- [ ] **ADR-027** — hybrid: `public` = каталог платформы, `tenant_*` = данные tenant’а
+- [ ] **ADR-027** — hybrid: `public` = каталог платформы, `tenant_*` = данные tenant’а (draft: [docs/adr/027-schema-per-tenant-ddl.md](../docs/adr/027-schema-per-tenant-ddl.md))
 - [ ] Postgres schema per tenant + `search_path` на запросе
 - [ ] Apply V012-beta к одному tenant → таблица есть только в его схеме
 
@@ -83,23 +83,23 @@
 
 ## Неделя 3 — Safety & integration
 
-### B-12.7 Concurrency & validation
+### B-12.7 Concurrency & validation ✅
 
-1. Optimistic concurrency on `tenant_schema_versions`
+1. Optimistic concurrency on `tenant_schema_versions` (`UpdatedAt` token + optional `expectedUpdatedAt`)
 2. Reject apply if pending todos migration incompatible (simulate with beta tag)
 3. Dry-run mode query param `?dryRun=true` — returns plan only
 
-### B-12.8 Audit trail
+### B-12.8 Audit trail ✅
 
 1. Insert `migration_history` + domain event `TenantMigrationAppliedEvent`
-2. Outbox → notification (B-07 consumer log)
+2. Outbox → notification (`TenantMigrationAppliedNotificationConsumer` log stub)
 
-### B-12.9 Tests
+### B-12.9 Tests ✅
 
 1. Admin GET tenants — 200; user role — 403
 2. Apply migration bumps version
 3. Beta tenant sees extra pending migration vs stable
-4. ADR-027: schema-per-tenant vs shared schema (см. неделю 4)
+4. ADR-027: [docs/adr/027-schema-per-tenant-ddl.md](../docs/adr/027-schema-per-tenant-ddl.md) (week 4 physical DDL)
 
 ---
 

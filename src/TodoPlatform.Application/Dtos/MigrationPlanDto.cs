@@ -4,6 +4,7 @@ namespace TodoPlatform.Application.Dtos;
 public sealed record MigrationPlanDto(
     string CurrentVersion,
     string Track,
+    DateTimeOffset UpdatedAt,
     IReadOnlyList<MigrationPlanItemDto> Pending);
 
 public sealed record MigrationPlanItemDto(

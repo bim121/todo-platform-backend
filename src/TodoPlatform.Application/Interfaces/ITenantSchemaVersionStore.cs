@@ -17,4 +17,5 @@ public interface ITenantSchemaVersionStore
 public sealed record TenantSchemaVersionState(
     Guid TenantId,
     string Track,
-    long CurrentVersion);
+    long CurrentVersion,
+    DateTimeOffset UpdatedAt);

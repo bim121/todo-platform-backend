@@ -25,12 +25,13 @@ public sealed class GetMigrationPlanQueryHandler(
         var state = await versions.GetAsync(request.TenantId, cancellationToken);
         var track = state?.Track ?? tenant.DeploymentTrack;
         var current = state?.CurrentVersion ?? 0;
+        var updatedAt = state?.UpdatedAt ?? DateTimeOffset.MinValue;
         var label = plans.Find(current)?.SchemaVersionLabel ?? $"V{current:D3}";
 
         var pending = plans.GetPending(track, current)
             .Select(m => new MigrationPlanItemDto(m.Version, m.Description, m.Tags))
             .ToArray();
 
-        return new MigrationPlanDto(label, track, pending);
+        return new MigrationPlanDto(label, track, updatedAt, pending);
     }
 }
