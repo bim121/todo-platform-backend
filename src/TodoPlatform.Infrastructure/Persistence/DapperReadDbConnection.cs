@@ -53,7 +53,7 @@ internal sealed class TenantBoundNpgsqlConnection(NpgsqlConnection inner, ITenan
         if (inner.State != ConnectionState.Open)
             inner.Open();
 
-        TenantSession.Apply(inner, tenantContext.TenantId);
+        TenantSession.Apply(inner, tenantContext.TenantId, tenantContext.SchemaName);
     }
 
     public void Dispose()

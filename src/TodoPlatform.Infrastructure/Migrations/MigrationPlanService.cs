@@ -18,6 +18,8 @@ public sealed class MigrationPlanService : IMigrationPlanService
             .GetTypes()
             .Select(type => (type, migration: type.GetCustomAttribute<MigrationAttribute>()))
             .Where(x => x.migration is not null)
+            .Where(x => x.migration!.Version < 1000)
+            .Where(x => !IsPlatformOnly(x.type))
             .Select(x => ToInfo(x.type, x.migration!))
             .OrderBy(m => m.Version)
             .ToArray();
@@ -58,4 +60,9 @@ public sealed class MigrationPlanService : IMigrationPlanService
 
         return new MigrationInfo(migration.Version, name, name, tags);
     }
+
+    private static bool IsPlatformOnly(Type type) =>
+        type.GetCustomAttributes<TagsAttribute>()
+            .SelectMany(a => a.TagNames)
+            .Any(t => string.Equals(t, "platform", StringComparison.OrdinalIgnoreCase));
 }

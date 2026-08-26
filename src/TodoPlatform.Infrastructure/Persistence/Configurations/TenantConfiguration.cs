@@ -30,5 +30,12 @@ public sealed class TenantConfiguration : IEntityTypeConfiguration<Tenant>
 
         builder.Property(t => t.CreatedAt)
             .IsRequired();
+
+        builder.Property(t => t.SchemaName)
+            .HasMaxLength(128)
+            .IsRequired();
+
+        builder.HasIndex(t => t.SchemaName)
+            .IsUnique();
     }
 }

@@ -13,6 +13,7 @@ public sealed class TenantTests
 
         Assert.Equal(WellKnownTenants.AcmeId, tenant.Id);
         Assert.Equal("acme-corp", tenant.Slug);
+        Assert.Equal(TenantSchemaNaming.FromSlug("acme-corp"), tenant.SchemaName);
         Assert.Equal(TenantStatus.Active, tenant.Status);
         Assert.True(tenant.IsActive);
     }

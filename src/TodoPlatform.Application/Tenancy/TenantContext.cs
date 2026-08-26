@@ -1,3 +1,5 @@
+using TodoPlatform.Domain.Tenancy;
+
 namespace TodoPlatform.Application.Tenancy;
 
 public sealed class TenantContext : ITenantContext
@@ -6,9 +8,11 @@ public sealed class TenantContext : ITenantContext
 
     public string? Slug { get; private set; }
 
+    public string? SchemaName { get; private set; }
+
     public bool IsResolved { get; private set; }
 
-    public void Set(Guid tenantId, string slug)
+    public void Set(Guid tenantId, string slug, string? schemaName = null)
     {
         if (tenantId == Guid.Empty)
             throw new ArgumentException("Tenant id is required.", nameof(tenantId));
@@ -18,6 +22,9 @@ public sealed class TenantContext : ITenantContext
 
         TenantId = tenantId;
         Slug = slug;
+        SchemaName = string.IsNullOrWhiteSpace(schemaName)
+            ? TenantSchemaNaming.FromSlug(slug)
+            : schemaName;
         IsResolved = true;
     }
 }

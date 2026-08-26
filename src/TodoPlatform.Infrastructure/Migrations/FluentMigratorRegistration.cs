@@ -18,10 +18,11 @@ public static class FluentMigratorRegistration
                 .ScanIn(typeof(V001_CreateUsersAndTodosTables).Assembly).For.Migrations())
             .AddLogging(lb => lb.AddFluentMigratorConsole());
 
-        // B-12.2 — default MigrateUp: untagged + [Tags("stable")]. Beta-tagged migrations stay pending.
+        // B-12.2 — default MigrateUp: untagged + [Tags("stable")] + [Tags("platform")].
+        // Tenant-stream (T1001+) and beta logical catalog (V012) stay pending globally.
         services.Configure<RunnerOptions>(options =>
         {
-            options.Tags = ["stable"];
+            options.Tags = ["stable", "platform"];
             options.IncludeUntaggedMigrations = true;
         });
 

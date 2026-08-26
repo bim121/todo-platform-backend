@@ -11,8 +11,8 @@ Authenticated request:
    - Header `X-Tenant-Id` (UUID **or** slug: `default`, `acme-corp`)
    - else JWT claim `tenant_id`
    - missing → **400**; unknown/inactive → **404**
-3. Scoped `ITenantContext.Set(id, slug)`
-4. EF interceptor / Dapper wrapper: `SET app.current_tenant`
+3. Scoped `ITenantContext.Set(id, slug, schemaName)`
+4. EF interceptor / Dapper wrapper: `SET search_path TO tenant_{slug}, public` + `SET app.current_tenant`
 5. `UseCurrentUserSync` / `[Authorize]`
 
 Health and Swagger skip the header.
@@ -24,8 +24,9 @@ Client  --X-Tenant-Id / JWT-->  Middleware  --> ITenantContext
                                       |
                     +-----------------+------------------+
                     v                                    v
-            EF query filter                    Postgres RLS
+            EF query filter                    Postgres RLS + search_path
             (Todo, User)                       SET app.current_tenant
+                                               SET search_path = tenant_*, public
                     |
                     v
             Redis keys  todos:tenant:{tid}:user:{uid}
@@ -61,6 +62,30 @@ SELECT COUNT(*) FROM todos;  -- 0 for todo_app; all rows for superuser
 
 Platform-wide `GET /api/admin/stats` sets `app.bypass_rls=true` for that query, then RESET. Do not set this on ordinary todo CRUD.
 
+Admin stats also **bypass `search_path`**: when `tenants.SchemaName` is populated, the query unions `users`/`todos` across all `tenant_*` schemas (see `DapperSystemStatsReadStore`). Catalog tables remain under explicit `public.`.
+
+## Schema-per-tenant (`search_path`)
+
+Since B-12 week 4, tenant-owned tables live in `tenant_{slug}` (column `tenants.SchemaName`). After tenant resolution:
+
+```sql
+SET search_path TO tenant_default, public;
+SET app.current_tenant = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
+SELECT * FROM todos;  -- resolves to tenant_default.todos
+SELECT * FROM public.tenants;  -- platform catalog
+```
+
+On connection close / return to pool, `TenantSession.Reset` sets `search_path` back to `public` so the next request cannot inherit another tenant’s schema.
+
+Verify:
+
+```sql
+SHOW search_path;
+SELECT table_schema, table_name FROM information_schema.tables
+WHERE table_name = 'beta_preview_flags';
+-- only beta-applied tenant schemas
+```
+
 ## Cache
 
 | Key | Use |
@@ -81,9 +106,11 @@ If tenant B can `GET /todos/{id}` and receive tenant A’s JSON, look at **cache
 | Cross-tenant list not empty (InMemory tests) | Query filter off (`ITenantContext` not resolved) |
 | Cross-tenant list not empty (Postgres + `todo`) | Superuser bypass — use `todo_app` |
 | Stale todo from another tenant | Cache key without tenant (pre-B-11.8) |
-| Admin stats only one tenant | Bypass GUC not applied on the stats connection |
+| Admin stats only one tenant | Bypass GUC not applied, or search_path still scoped to one tenant |
+| Wrong tenant schema after idle | Pool leak — ensure `TenantSession.Reset` on connection close |
 
 ## Related
 
 - [ADR-026](../adr/026-shared-schema-rls.md)
+- [ADR-027](../adr/027-schema-per-tenant-ddl.md)
 - `TenantResolutionMiddleware`, `TenantSession`, `AppDbContext` (`TenantFilterEnabled`)

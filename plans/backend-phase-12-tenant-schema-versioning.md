@@ -22,9 +22,9 @@
 - [x] FluentMigrator tagged migrations `@Tags("beta")` demo (`V012`)
 - [x] Admin-only `[Authorize(Roles = "admin")]`
 - [x] Audit log row on each apply (week 2 logical; domain event `TenantMigrationAppliedEvent`)
-- [ ] **ADR-027** — hybrid: `public` = каталог платформы, `tenant_*` = данные tenant’а (draft: [docs/adr/027-schema-per-tenant-ddl.md](../docs/adr/027-schema-per-tenant-ddl.md))
-- [ ] Postgres schema per tenant + `search_path` на запросе
-- [ ] Apply V012-beta к одному tenant → таблица есть только в его схеме
+- [x] **ADR-027** — hybrid: `public` = каталог платформы, `tenant_*` = данные tenant’а ([docs/adr/027-schema-per-tenant-ddl.md](../docs/adr/027-schema-per-tenant-ddl.md))
+- [x] Postgres schema per tenant + `search_path` на запросе
+- [x] Apply V012-beta к одному tenant → таблица есть только в его схеме
 
 ---
 
@@ -131,7 +131,7 @@ default track=stable  (без apply) →  tenant_default.beta_preview_flags не
 
 Один бинарь API по-прежнему. Код, который читает объекты только с beta-схемы, ветвится по `CurrentVersion` / track (иначе запрос к `beta_preview_flags` упадёт на stable tenant). Destructивные шаги (`DROP COLUMN`) допустимы **только** в tenant-stream и только для tenants, которые apply догнали; пока есть отстающие — либо не дропать, либо держать два пути в коде.
 
-### B-12.10 ADR-027
+### B-12.10 ADR-027 ✅
 
 Файл: `docs/adr/027-schema-per-tenant-ddl.md`
 
@@ -139,14 +139,14 @@ default track=stable  (без apply) →  tenant_default.beta_preview_flags не
 2. Decision: hybrid public + `tenant_*`; reject DB-per-tenant (ops) и «только фичи» (нет разных таблиц)
 3. Consequences: N× `VersionInfo`, provision на create, cutover с `public.todos`
 
-### B-12.11 `search_path` на запросе
+### B-12.11 `search_path` на запросе ✅
 
 1. После резолва tenant: `SET search_path TO tenant_acme, public` (тот же interceptor, что ставит `app.current_tenant`)
 2. На возврат в пул: `RESET search_path` + сброс GUC (иначе соседний запрос другого tenant увидит чужую схему)
 3. EF/Dapper: неквалифицированные `todos` / `users` резолвятся в tenant schema; каталог — `public.tenants`
-4. Admin stats: `bypass_rls` **и** обход search_path (явный `public.` / union по схемам) — задокументировать в isolation.md
+4. Admin stats: `bypass_rls` **и** обход search_path (явный `public.` / union по схемам) — [isolation.md](../docs/multi-tenancy/isolation.md)
 
-### B-12.12 `ITenantMigrationRunner`
+### B-12.12 `ITenantMigrationRunner` ✅
 
 1. Для схемы tenant’а свой FluentMigrator processor: `VersionInfo` **внутри** `tenant_*` (не общий `public.VersionInfo`)
 2. Каталог шагов тот же (`[Migration(N)]`), но tenant-stream не выполняется глобальным `MigrateUp` (тег `tenant` и/или отдельный `Maintenance` runner)
@@ -154,14 +154,14 @@ default track=stable  (без apply) →  tenant_default.beta_preview_flags не
 4. Apply одного шага за вызов (не скачок через breaking versions без проверки B-12.7)
 5. Dry-run: `PreviewOnly` / SQL script в ответе плана, без commit
 
-### B-12.13 Provision + cutover существующих данных
+### B-12.13 Provision + cutover существующих данных ✅
 
 1. Create tenant (или seeder): `CREATE SCHEMA`, прогон tenant-stream до latest **stable** (не beta)
 2. Платформенная миграция (V013): для каждого существующего tenant создать схему, скопировать его ряды из `public.todos` / `public.users`, проставить `SchemaName`
 3. После cutover приложение **не** пишет tenant-данные в `public.todos` (оставить таблицы или view на время rollback — в ADR)
 4. Новый tenant на beta: provision stable, затем admin apply V012 — не тащить beta в create по умолчанию
 
-### B-12.14 Тесты недели 4
+### B-12.14 Тесты недели 4 ✅
 
 1. Testcontainers: apply beta только acme → `\dt tenant_acme.*` содержит `beta_preview_flags`, `tenant_default` — нет
 2. Два параллельных HTTP-запроса разных tenants не протекают `search_path` через пул

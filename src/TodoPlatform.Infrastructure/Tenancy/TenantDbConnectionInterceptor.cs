@@ -11,7 +11,7 @@ public sealed class TenantDbConnectionInterceptor(ITenantContext tenantContext) 
 {
     public override void ConnectionOpened(DbConnection connection, ConnectionEndEventData eventData)
     {
-        TenantSession.Apply(connection, tenantContext.TenantId);
+        TenantSession.Apply(connection, tenantContext.TenantId, tenantContext.SchemaName);
         base.ConnectionOpened(connection, eventData);
     }
 
@@ -20,7 +20,7 @@ public sealed class TenantDbConnectionInterceptor(ITenantContext tenantContext) 
         ConnectionEndEventData eventData,
         CancellationToken cancellationToken = default)
     {
-        await TenantSession.ApplyAsync(connection, tenantContext.TenantId, cancellationToken);
+        await TenantSession.ApplyAsync(connection, tenantContext.TenantId, tenantContext.SchemaName, cancellationToken);
         await base.ConnectionOpenedAsync(connection, eventData, cancellationToken);
     }
 

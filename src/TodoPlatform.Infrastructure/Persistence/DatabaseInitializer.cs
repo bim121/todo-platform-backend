@@ -31,7 +31,8 @@ public static class DatabaseInitializer
             var tenantContext = scope.ServiceProvider.GetRequiredService<ITenantContext>();
             tenantContext.Set(
                 Domain.Tenancy.WellKnownTenants.DefaultId,
-                Domain.Tenancy.WellKnownTenants.DefaultSlug);
+                Domain.Tenancy.WellKnownTenants.DefaultSlug,
+                Domain.Tenancy.TenantSchemaNaming.FromSlug(Domain.Tenancy.WellKnownTenants.DefaultSlug));
 
             var seeder = scope.ServiceProvider.GetRequiredService<DbSeeder>();
             await seeder.SeedAsync();

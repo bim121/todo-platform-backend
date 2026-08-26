@@ -12,7 +12,8 @@ public sealed class DbSeeder(
     AppDbContext db,
     IPasswordHasher passwordHasher,
     ITenantContext tenantContext,
-    IMigrationPlanService migrationPlans)
+    IMigrationPlanService migrationPlans,
+    ITenantSchemaProvisioner schemaProvisioner)
 {
     public const string TestEmail = "test@example.com";
     public const string TestPassword = "password123";
@@ -21,8 +22,9 @@ public sealed class DbSeeder(
     {
         await EnsureTenantsAsync(cancellationToken);
         await EnsureSchemaVersionsAsync(cancellationToken);
+        await schemaProvisioner.EnsureAllTenantsProvisionedAsync(cancellationToken);
 
-        tenantContext.Set(WellKnownTenants.DefaultId, WellKnownTenants.DefaultSlug);
+        tenantContext.Set(WellKnownTenants.DefaultId, WellKnownTenants.DefaultSlug, TenantSchemaNaming.FromSlug(WellKnownTenants.DefaultSlug));
         await ApplyTenantToOpenConnectionAsync(cancellationToken);
 
         var user = await db.Users
@@ -100,6 +102,6 @@ public sealed class DbSeeder(
 
         var connection = db.Database.GetDbConnection();
         if (connection.State == System.Data.ConnectionState.Open)
-            await TenantSession.ApplyAsync(connection, tenantContext.TenantId, cancellationToken);
+            await TenantSession.ApplyAsync(connection, tenantContext.TenantId, tenantContext.SchemaName, cancellationToken);
     }
 }

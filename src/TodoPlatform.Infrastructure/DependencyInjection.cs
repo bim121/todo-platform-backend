@@ -36,8 +36,10 @@ public static class DependencyInjection
         services.AddSingleton<IMigrationPlanService, MigrationPlanService>();
         services.AddScoped<EfTenantSchemaVersionStore>();
         services.AddScoped<ITenantSchemaVersionStore>(sp => sp.GetRequiredService<EfTenantSchemaVersionStore>());
-        services.AddScoped<ITenantMigrationRunner, LogicalTenantMigrationRunner>();
+        services.AddScoped<ITenantMigrationRunner, PhysicalTenantMigrationRunner>();
         services.AddScoped<ITenantMigrationCompatibilityValidator, TenantMigrationCompatibilityValidator>();
+        services.AddSingleton<ITenantFluentMigrator, TenantFluentMigrator>();
+        services.AddScoped<ITenantSchemaProvisioner, TenantSchemaProvisioner>();
 
         if (configuration.GetValue("Database:UseInMemory", false))
         {

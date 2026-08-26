@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Статус** | Accepted (week 3 draft; physical DDL week 4) |
+| **Статус** | Accepted |
 | **Дата** | 2026-08-26 |
 | **Фаза** | B-12 |
 | **План** | [backend-phase-12-tenant-schema-versioning.md](../../plans/backend-phase-12-tenant-schema-versioning.md) |
@@ -32,25 +32,26 @@ Alternatives:
 
 | Schema | Contents | Migrations |
 |--------|----------|------------|
-| `public` | Platform catalog: `tenants`, `tenant_schema_versions`, `migration_history`, global `VersionInfo` | Startup `MigrateUp` (V001–V011+) |
-| `tenant_{slug}` | Tenant-owned: `todos`, `users`, beta tables, future ALTER | `ITenantMigrationRunner` on provision + admin apply |
+| `public` | Platform catalog: `tenants`, `tenant_schema_versions`, `migration_history`, global `VersionInfo` | Startup `MigrateUp` (V001–V013 platform) |
+| `tenant_{slug}` | Tenant-owned: `todos`, `users`, beta tables, future ALTER | `PhysicalTenantMigrationRunner` on provision + admin apply |
 
-Naming: `tenant_` + sanitised slug; `tenants.SchemaName` unique column (week 4).
+Naming: `tenant_` + sanitised slug (`[a-z0-9_]`); `tenants.SchemaName` unique column.
 
 ### 2. ADR-026 remains for row isolation
 
 RLS + `TenantId` stay as defense-in-depth even with `search_path`. A pool leak of `search_path` must not expose another tenant’s rows.
 
-### 3. Week 3 deliverables (logical apply)
+### 3. Two migration streams
 
-Until week 4 ships physical DDL:
+| Stream | Versions | Tags | Runner |
+|--------|----------|------|--------|
+| Platform | V001–V013 | untagged / `platform` | Global `MigrateUp` at startup |
+| Logical catalog | 1–12 | `beta` on V012 | `IMigrationPlanService` (admin UI) |
+| Physical tenant | T1001 (baseline), T1012 (beta) | `tenant` | `TenantFluentMigrator` per schema |
 
-- Admin apply bumps **logical** `CurrentVersion` and writes `migration_history`.
-- Beta-tagged steps are **not** applied to `public` by startup migrate.
-- Compatibility rules simulate breaking beta DDL (beta track + no existing todos).
-- `TenantMigrationAppliedEvent` → outbox → MassTransit consumer log (B-12.8).
+Admin apply bumps **logical** `CurrentVersion`, writes `migration_history`, and runs physical tenant-stream DDL inside `tenant_*`.
 
-Week 4 replaces `LogicalTenantMigrationRunner` DDL stub with FluentMigrator inside `tenant_*`.
+V012 logical entry is catalog-only; physical beta table is **T1012** via `search_path` on the tenant connection.
 
 ### 4. Rejected
 
@@ -63,21 +64,21 @@ Week 4 replaces `LogicalTenantMigrationRunner` DDL stub with FluentMigrator insi
 
 **Positive**
 
-- Clear path from logical tracks (week 3) to physical schema isolation (week 4).
+- Two tenants can have different physical catalogs (proof: `tenant_acme_corp.beta_preview_flags` vs absent in `tenant_default`).
 - One API binary; admin controls rollout per tenant.
 - Platform metadata stays queryable from `public`.
 
 **Negative / tradeoffs**
 
-- N× tenant `VersionInfo` tables; provision on create tenant.
-- Cutover migration from `public.todos` → `tenant_*` (B-12.13).
+- N× tenant `VersionInfo` tables; provision on create tenant (`TenantSchemaProvisioner`).
+- Cutover migration V013 from `public.todos` → `tenant_*`; legacy `public.todos` retained for rollback window.
 - Application code must branch on track/version when touching beta-only objects until all tenants converge.
-- `search_path` must be reset on connection return to pool.
+- `search_path` must be reset on connection return to pool (`TenantSession.Reset`).
 
 ---
 
 ## Links
 
 - [docs/migrations/versioning.md](../migrations/versioning.md)
-- `LogicalTenantMigrationRunner`, `TenantMigrationCompatibilityValidator`
-- Planned: B-12.11 `search_path`, B-12.12 tenant FluentMigrator processor
+- [docs/multi-tenancy/isolation.md](../multi-tenancy/isolation.md)
+- `PhysicalTenantMigrationRunner`, `TenantFluentMigrator`, `V013_TenantSchemaCutover`

@@ -1,5 +1,6 @@
 using TodoPlatform.Domain.Common;
 using TodoPlatform.Domain.Enums;
+using TodoPlatform.Domain.Tenancy;
 
 namespace TodoPlatform.Domain.Entities;
 
@@ -7,6 +8,7 @@ public class Tenant : Entity
 {
     public string Slug { get; private set; } = string.Empty;
     public string Name { get; private set; } = string.Empty;
+    public string SchemaName { get; private set; } = string.Empty;
     public TenantStatus Status { get; private set; } = TenantStatus.Active;
     public DateTimeOffset CreatedAt { get; private set; }
 
@@ -33,9 +35,21 @@ public class Tenant : Entity
             Id = id ?? Guid.NewGuid(),
             Slug = normalized,
             Name = name.Trim(),
+            SchemaName = TenantSchemaNaming.FromSlug(normalized),
             Status = TenantStatus.Active,
             CreatedAt = DateTimeOffset.UtcNow
         };
+    }
+
+    public void AssignSchemaName(string schemaName)
+    {
+        if (string.IsNullOrWhiteSpace(schemaName))
+            throw new ArgumentException("Schema name is required.", nameof(schemaName));
+
+        if (!TenantSchemaNaming.IsValidSchemaName(schemaName))
+            throw new ArgumentException("Schema name is invalid.", nameof(schemaName));
+
+        SchemaName = schemaName;
     }
 
     public void Deactivate() => Status = TenantStatus.Inactive;

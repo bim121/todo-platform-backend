@@ -62,13 +62,13 @@ public sealed class TenantResolutionMiddleware(RequestDelegate next)
             throw new NotFoundException($"Tenant '{raw}' was not found or is inactive.");
         }
 
-        tenantContext.Set(tenant.Id, tenant.Slug);
+        tenantContext.Set(tenant.Id, tenant.Slug, tenant.SchemaName);
 
         if (db.Database.IsRelational())
         {
             var connection = db.Database.GetDbConnection();
             if (connection.State == ConnectionState.Open)
-                await TenantSession.ApplyAsync(connection, tenant.Id, context.RequestAborted);
+                await TenantSession.ApplyAsync(connection, tenant.Id, tenant.SchemaName, context.RequestAborted);
         }
 
         await next(context);

@@ -14,9 +14,11 @@ internal sealed class TestTenantContext(
 
     public string? Slug { get; } = slug;
 
+    public string? SchemaName { get; } = TenantSchemaNaming.FromSlug(slug);
+
     public bool IsResolved => TenantId != Guid.Empty;
 
-    public void Set(Guid id, string newSlug)
+    public void Set(Guid id, string newSlug, string? schemaName = null)
     {
         // Test double is immutable.
     }
