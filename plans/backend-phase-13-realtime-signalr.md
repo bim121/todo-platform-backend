@@ -10,9 +10,9 @@
 
 ## Результат фазы
 
-- [ ] `TodoHub` — groups per tenant+user: `tenant:{tid}:user:{uid}`
-- [ ] JWT bearer auth on `/hubs/todos` negotiate
-- [ ] Redis backplane для scale-out (`Microsoft.AspNetCore.SignalR.StackExchangeRedis`)
+- [x] `TodoHub` — groups per tenant+user: `tenant:{tid}:user:{uid}`
+- [x] JWT bearer auth on `/hubs/todos` negotiate
+- [x] Redis backplane для scale-out (`Microsoft.AspNetCore.SignalR.StackExchangeRedis`)
 - [ ] Events: `TodoCreated`, `TodoUpdated`, `TodoDeleted` — typed client interface
 - [ ] `TodoUpdatedSignalRConsumer` — subscribes MassTransit, pushes to hub
 - [ ] CORS + WebSocket proxy headers documented for nginx (B-23)
@@ -23,7 +23,7 @@
 
 ## Неделя 1 — Hub & auth
 
-### B-13.1 SignalR setup
+### B-13.1 SignalR setup ✅
 
 1. `services.AddSignalR().AddStackExchangeRedis(...)`
 2. Map hub: `app.MapHub<TodoHub>("/hubs/todos")`
@@ -31,13 +31,13 @@
 
 **Файл:** `src/TodoPlatform.Api/Hubs/TodoHub.cs`
 
-### B-13.2 JWT for WebSockets
+### B-13.2 JWT for WebSockets ✅
 
 1. `OnMessageReceived` — read token from query `?access_token=` for WS
 2. Same Keycloak validation as REST
 3. `ITodoHubClient` interface with strongly typed methods
 
-### B-13.3 Group management
+### B-13.3 Group management ✅
 
 1. On connect — resolve tenant from header/query, user from claims
 2. `Groups.AddToGroupAsync(connectionId, groupName)`

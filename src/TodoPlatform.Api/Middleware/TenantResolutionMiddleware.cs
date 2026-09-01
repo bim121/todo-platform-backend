@@ -79,6 +79,7 @@ public sealed class TenantResolutionMiddleware(RequestDelegate next)
         var path = context.Request.Path;
         return path.StartsWithSegments("/health")
             || path.StartsWithSegments("/swagger")
+            || path.StartsWithSegments("/hubs")
             || path.StartsWithSegments("/api/health")
             || path == "/"
             || HttpMethods.IsOptions(context.Request.Method);

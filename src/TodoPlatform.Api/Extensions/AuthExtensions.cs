@@ -64,6 +64,19 @@ public static class AuthExtensions
                 };
                 options.Events = new JwtBearerEvents
                 {
+                    OnMessageReceived = context =>
+                    {
+                        // B-13.2 — browsers pass JWT on WebSocket via query string.
+                        var accessToken = context.Request.Query["access_token"];
+                        var path = context.HttpContext.Request.Path;
+                        if (!string.IsNullOrEmpty(accessToken)
+                            && path.StartsWithSegments("/hubs", StringComparison.OrdinalIgnoreCase))
+                        {
+                            context.Token = accessToken;
+                        }
+
+                        return Task.CompletedTask;
+                    },
                     OnChallenge = WriteAuthProblemDetailsAsync,
                     OnForbidden = WriteForbiddenProblemDetailsAsync,
                 };
@@ -137,11 +150,10 @@ public sealed class TestAuthHandler(
 
     protected override Task<AuthenticateResult> HandleAuthenticateAsync()
     {
-        var authorization = Request.Headers.Authorization.ToString();
-        if (!authorization.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+        var token = ReadBearerOrHubQueryToken();
+        if (token is null)
             return Task.FromResult(AuthenticateResult.NoResult());
 
-        var token = authorization["Bearer ".Length..].Trim();
         if (!string.Equals(token, TestToken, StringComparison.Ordinal))
             return Task.FromResult(AuthenticateResult.Fail("Invalid test bearer token."));
 
@@ -171,5 +183,19 @@ public sealed class TestAuthHandler(
         var ticket = new AuthenticationTicket(principal, AuthenticationSchemeName);
 
         return Task.FromResult(AuthenticateResult.Success(ticket));
+    }
+
+    private string? ReadBearerOrHubQueryToken()
+    {
+        var authorization = Request.Headers.Authorization.ToString();
+        if (authorization.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+            return authorization["Bearer ".Length..].Trim();
+
+        if (!Request.Path.StartsWithSegments("/hubs", StringComparison.OrdinalIgnoreCase))
+            return null;
+
+        return Request.Query.TryGetValue("access_token", out var values)
+            ? values.FirstOrDefault()?.Trim()
+            : null;
     }
 }

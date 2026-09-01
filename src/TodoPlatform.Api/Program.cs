@@ -30,6 +30,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddApiSwagger(builder.Configuration);
 builder.Services.AddApiAuthentication(builder.Configuration, builder.Environment);
+builder.Services.AddApiSignalR(builder.Configuration, builder.Environment);
 
 builder.Services.AddHealthChecks();
 
@@ -70,6 +71,7 @@ app.UseApiVersioning();
 app.UseDeprecationHeaders();
 
 app.MapControllers();
+app.MapApiHubs();
 app.MapHealthChecks("/health");
 app.MapHealthChecks("/health/ready");
 
