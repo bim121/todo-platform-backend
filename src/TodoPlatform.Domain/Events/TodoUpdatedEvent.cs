@@ -3,7 +3,7 @@ using TodoPlatform.Domain.Common;
 
 namespace TodoPlatform.Domain.Events;
 
-public sealed record TodoDeletedEvent(
+public sealed record TodoUpdatedEvent(
     Guid TodoId,
     Guid UserId,
     Guid TenantId,

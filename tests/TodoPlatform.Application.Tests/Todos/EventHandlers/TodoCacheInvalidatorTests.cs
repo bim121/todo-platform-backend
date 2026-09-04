@@ -64,7 +64,7 @@ public sealed class TodoCacheInvalidatorTests
         var userId = Guid.NewGuid();
         var tenantId = WellKnownTenants.DefaultId;
 
-        await handler.Handle(new TodoDeletedEvent(todoId, userId, tenantId), CancellationToken.None);
+        await handler.Handle(new TodoDeletedEvent(todoId, userId, tenantId, "gone", false), CancellationToken.None);
 
         cache.Verify(c => c.RemoveAsync(CacheKeys.TodoById(tenantId, todoId), It.IsAny<CancellationToken>()), Times.Once);
         cache.Verify(

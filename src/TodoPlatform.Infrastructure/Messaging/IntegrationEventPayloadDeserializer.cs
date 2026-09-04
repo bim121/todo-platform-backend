@@ -21,6 +21,10 @@ public static class IntegrationEventPayloadDeserializer
         {
             TodoCreatedIntegrationEvent.EventTypeName =>
                 dataElement.Deserialize<TodoCreatedIntegrationEvent>(SerializerOptions),
+            TodoUpdatedIntegrationEvent.EventTypeName =>
+                dataElement.Deserialize<TodoUpdatedIntegrationEvent>(SerializerOptions),
+            TodoDeletedIntegrationEvent.EventTypeName =>
+                dataElement.Deserialize<TodoDeletedIntegrationEvent>(SerializerOptions),
             TodoCompletedIntegrationEvent.EventTypeName =>
                 dataElement.Deserialize<TodoCompletedIntegrationEvent>(SerializerOptions),
             TenantMigrationAppliedIntegrationEvent.EventTypeName =>

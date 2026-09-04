@@ -13,11 +13,11 @@
 - [x] `TodoHub` — groups per tenant+user: `tenant:{tid}:user:{uid}`
 - [x] JWT bearer auth on `/hubs/todos` negotiate
 - [x] Redis backplane для scale-out (`Microsoft.AspNetCore.SignalR.StackExchangeRedis`)
-- [ ] Events: `TodoCreated`, `TodoUpdated`, `TodoDeleted` — typed client interface
-- [ ] `TodoUpdatedSignalRConsumer` — subscribes MassTransit, pushes to hub
-- [ ] CORS + WebSocket proxy headers documented for nginx (B-23)
-- [ ] Frontend contract doc: event payload shapes
-- [ ] Integration test with `Microsoft.AspNetCore.SignalR.Client`
+- [x] Events: `TodoCreated`, `TodoUpdated`, `TodoDeleted` — typed client interface
+- [x] `TodoUpdatedSignalRConsumer` — subscribes MassTransit, pushes to hub
+- [x] CORS + WebSocket proxy headers documented for nginx (B-23)
+- [x] Frontend contract doc: event payload shapes
+- [x] Integration test with `Microsoft.AspNetCore.SignalR.Client`
 
 ---
 
@@ -47,21 +47,21 @@
 
 ## Неделя 2 — Event bridge & scale
 
-### B-13.4 MassTransit → SignalR
+### B-13.4 MassTransit → SignalR ✅
 
 1. Consumer on `TodoCreatedIntegrationEvent`
-2. Inject `IHubContext<TodoHub, ITodoHubClient>`
+2. Inject `IHubContext<TodoHub, ITodoHubClient>` (via `ITodoRealtimeNotifier`)
 3. Broadcast to group `tenant:{tid}:user:{uid}` only — not global fanout
 
 **Файл:** `Infrastructure/Realtime/TodoCreatedSignalRConsumer.cs`
 
-### B-13.5 Update & delete events
+### B-13.5 Update & delete events ✅
 
 1. Publish integration events from Update/Delete handlers (outbox)
 2. Matching consumers for Updated/Deleted
 3. Payload: minimal DTO `{ id, title, completed, version }`
 
-### B-13.6 Tests & docs
+### B-13.6 Tests & docs ✅
 
 1. Test client connects, receives event after REST create
 2. Multi-instance test with Redis backplane (two API containers in compose)

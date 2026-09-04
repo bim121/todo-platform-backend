@@ -46,7 +46,9 @@ public sealed class SendTodoCreatedEmailConsumerHarnessTests
             var message = new TodoCreatedIntegrationEvent(
                 Guid.NewGuid(),
                 userId,
+                Guid.NewGuid(),
                 "Harness todo",
+                false,
                 DateTimeOffset.UtcNow);
 
             await harness.Bus.Publish(message);

@@ -3,9 +3,11 @@ using TodoPlatform.Api.Auth;
 using TodoPlatform.Api.Exceptions;
 using TodoPlatform.Api.Extensions;
 using TodoPlatform.Api.Middleware;
+using TodoPlatform.Api.Realtime;
 using TodoPlatform.Api.Swagger;
 using TodoPlatform.Api.Versioning;
 using TodoPlatform.Application;
+using TodoPlatform.Application.Interfaces;
 using TodoPlatform.Infrastructure;
 using TodoPlatform.Infrastructure.Behaviors;
 using TodoPlatform.Infrastructure.Persistence;
@@ -31,6 +33,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddApiSwagger(builder.Configuration);
 builder.Services.AddApiAuthentication(builder.Configuration, builder.Environment);
 builder.Services.AddApiSignalR(builder.Configuration, builder.Environment);
+builder.Services.AddScoped<ITodoRealtimeNotifier, SignalRTodoRealtimeNotifier>();
 
 builder.Services.AddHealthChecks();
 
@@ -42,7 +45,8 @@ builder.Services.AddCors(options =>
                 builder.Configuration.GetSection("Cors:Origins").Get<string[]>()
                 ?? ["http://localhost:4200"])
             .AllowAnyHeader()
-            .AllowAnyMethod());
+            .AllowAnyMethod()
+            .AllowCredentials());
 });
 
 var app = builder.Build();

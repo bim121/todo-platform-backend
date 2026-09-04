@@ -135,6 +135,45 @@ services:
       retries: 10
       start_period: 30s
 
+  # Second API instance for Redis SignalR backplane checks (B-13.6).
+  # Connect WS to :8080, call REST on :8081 (or reverse) — events still arrive.
+  api-2:
+    profiles: ["signalr-scale"]
+    build:
+      context: .
+      dockerfile: src/TodoPlatform.Api/Dockerfile
+    ports:
+      - "${API2_PORT:-8081}:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
+      ASPNETCORE_URLS: http://+:8080
+      Database__AutoMigrate: "false"
+      ConnectionStrings__Default: Host=postgres;Port=5432;Database=${POSTGRES_DB:-tododb};Username=${POSTGRES_USER:-todo};Password=${POSTGRES_PASSWORD:-todo};Maximum Pool Size=100;Minimum Pool Size=0;Timeout=15
+      ConnectionStrings__Read: Host=postgres;Port=5432;Database=${POSTGRES_DB:-tododb};Username=${POSTGRES_USER:-todo};Password=${POSTGRES_PASSWORD:-todo};Maximum Pool Size=100;Minimum Pool Size=0;Timeout=15
+      ConnectionStrings__Redis: redis:6379
+      SignalR__UseRedisBackplane: "true"
+      Cors__Origins__0: ${CORS_ORIGIN:-http://localhost:4200}
+      RabbitMq__Enabled: "true"
+      RabbitMq__Host: rabbitmq
+      RabbitMq__Port: "5672"
+      RabbitMq__Username: ${RABBITMQ_USER:-todo}
+      RabbitMq__Password: ${RABBITMQ_PASSWORD:-todo}
+      Keycloak__Authority: ${KEYCLOAK_AUTHORITY:-http://localhost:8180/realms/todo-platform}
+      Keycloak__MetadataAddress: ${KEYCLOAK_METADATA_ADDRESS:-http://keycloak:8080/realms/todo-platform/.well-known/openid-configuration}
+      Keycloak__Audience: ${KEYCLOAK_AUDIENCE:-todo-api}
+      Keycloak__RequireHttpsMetadata: "false"
+    networks:
+      - todo-net
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      api:
+        condition: service_healthy
+
   # Optional hot-reload API (profile: dev). Stop published api to free port 8080:
   #   docker compose --profile dev up -d --scale api=0
   api-watch:

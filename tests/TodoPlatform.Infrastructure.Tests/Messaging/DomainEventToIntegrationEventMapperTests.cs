@@ -14,7 +14,8 @@ public sealed class DomainEventToIntegrationEventMapperTests
     {
         var todoId = Guid.NewGuid();
         var userId = Guid.NewGuid();
-        var domainEvent = new TodoCreatedEvent(todoId, userId, Guid.NewGuid(), "Buy milk");
+        var tenantId = Guid.NewGuid();
+        var domainEvent = new TodoCreatedEvent(todoId, userId, tenantId, "Buy milk");
 
         var envelope = _sut.Map(domainEvent);
 
@@ -26,7 +27,44 @@ public sealed class DomainEventToIntegrationEventMapperTests
         var data = Assert.IsType<TodoCreatedIntegrationEvent>(envelope.Data);
         Assert.Equal(todoId, data.TodoId);
         Assert.Equal(userId, data.UserId);
+        Assert.Equal(tenantId, data.TenantId);
         Assert.Equal("Buy milk", data.Title);
+        Assert.False(data.Completed);
+    }
+
+    [Fact]
+    public void Map_TodoUpdatedEvent_ReturnsEnvelope()
+    {
+        var todoId = Guid.NewGuid();
+        var userId = Guid.NewGuid();
+        var tenantId = Guid.NewGuid();
+        var domainEvent = new TodoUpdatedEvent(todoId, userId, tenantId, "Renamed", true);
+
+        var envelope = _sut.Map(domainEvent);
+
+        Assert.NotNull(envelope);
+        Assert.Equal(TodoUpdatedIntegrationEvent.EventTypeName, envelope.Type);
+        var data = Assert.IsType<TodoUpdatedIntegrationEvent>(envelope.Data);
+        Assert.Equal(todoId, data.TodoId);
+        Assert.Equal("Renamed", data.Title);
+        Assert.True(data.Completed);
+    }
+
+    [Fact]
+    public void Map_TodoDeletedEvent_ReturnsEnvelope()
+    {
+        var todoId = Guid.NewGuid();
+        var userId = Guid.NewGuid();
+        var tenantId = Guid.NewGuid();
+        var domainEvent = new TodoDeletedEvent(todoId, userId, tenantId, "Bye", false);
+
+        var envelope = _sut.Map(domainEvent);
+
+        Assert.NotNull(envelope);
+        Assert.Equal(TodoDeletedIntegrationEvent.EventTypeName, envelope.Type);
+        var data = Assert.IsType<TodoDeletedIntegrationEvent>(envelope.Data);
+        Assert.Equal(todoId, data.TodoId);
+        Assert.Equal("Bye", data.Title);
     }
 
     [Fact]
@@ -59,14 +97,6 @@ public sealed class DomainEventToIntegrationEventMapperTests
         Assert.Equal(tenantId, data.TenantId);
         Assert.Equal("V012-beta-feature", data.Version);
         Assert.Equal("admin@test", data.AppliedBy);
-    }
-
-    [Fact]
-    public void Map_UnknownDomainEvent_ReturnsNull()
-    {
-        var domainEvent = new TodoDeletedEvent(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid());
-
-        Assert.Null(_sut.Map(domainEvent));
     }
 
     [Fact]

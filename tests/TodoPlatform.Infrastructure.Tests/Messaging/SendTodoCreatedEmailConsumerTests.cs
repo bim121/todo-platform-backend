@@ -36,7 +36,7 @@ public sealed class SendTodoCreatedEmailConsumerTests
 
         var messageId = Guid.NewGuid();
         var context = CreateContext(messageId, new TodoCreatedIntegrationEvent(
-            Guid.NewGuid(), userId, "Title", DateTimeOffset.UtcNow));
+            Guid.NewGuid(), userId, Guid.NewGuid(), "Title", false, DateTimeOffset.UtcNow));
 
         await consumer.Consume(context.Object);
 
@@ -61,7 +61,7 @@ public sealed class SendTodoCreatedEmailConsumerTests
             NullLogger<SendTodoCreatedEmailConsumer>.Instance);
 
         var context = CreateContext(Guid.NewGuid(), new TodoCreatedIntegrationEvent(
-            Guid.NewGuid(), Guid.NewGuid(), "Title", DateTimeOffset.UtcNow));
+            Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), "Title", false, DateTimeOffset.UtcNow));
 
         await consumer.Consume(context.Object);
 

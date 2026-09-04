@@ -16,9 +16,33 @@ public sealed class DomainEventToIntegrationEventMapper : IDomainEventToIntegrat
                 Data: new TodoCreatedIntegrationEvent(
                     created.TodoId,
                     created.UserId,
+                    created.TenantId,
                     created.Title,
+                    Completed: false,
                     created.OccurredOn),
                 OccurredOn: created.OccurredOn),
+            TodoUpdatedEvent updated => new IntegrationEventEnvelope(
+                Type: TodoUpdatedIntegrationEvent.EventTypeName,
+                Version: IntegrationEventEnvelope.CurrentVersion,
+                Data: new TodoUpdatedIntegrationEvent(
+                    updated.TodoId,
+                    updated.UserId,
+                    updated.TenantId,
+                    updated.Title,
+                    updated.Completed,
+                    updated.OccurredOn),
+                OccurredOn: updated.OccurredOn),
+            TodoDeletedEvent deleted => new IntegrationEventEnvelope(
+                Type: TodoDeletedIntegrationEvent.EventTypeName,
+                Version: IntegrationEventEnvelope.CurrentVersion,
+                Data: new TodoDeletedIntegrationEvent(
+                    deleted.TodoId,
+                    deleted.UserId,
+                    deleted.TenantId,
+                    deleted.Title,
+                    deleted.Completed,
+                    deleted.OccurredOn),
+                OccurredOn: deleted.OccurredOn),
             TodoCompletedEvent completed => new IntegrationEventEnvelope(
                 Type: TodoCompletedIntegrationEvent.EventTypeName,
                 Version: IntegrationEventEnvelope.CurrentVersion,

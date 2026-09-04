@@ -1,6 +1,6 @@
 namespace TodoPlatform.Application.IntegrationEvents;
 
-public sealed record TodoCreatedIntegrationEvent(
+public sealed record TodoUpdatedIntegrationEvent(
     Guid TodoId,
     Guid UserId,
     Guid TenantId,
@@ -8,5 +8,5 @@ public sealed record TodoCreatedIntegrationEvent(
     bool Completed,
     DateTimeOffset OccurredOn) : IIntegrationEvent
 {
-    public const string EventTypeName = "TodoCreatedIntegrationEvent";
+    public const string EventTypeName = "TodoUpdatedIntegrationEvent";
 }

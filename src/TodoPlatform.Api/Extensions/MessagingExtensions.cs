@@ -3,6 +3,7 @@ using TodoPlatform.Api.Configuration;
 using TodoPlatform.Application.Interfaces;
 using TodoPlatform.Infrastructure.Messaging;
 using TodoPlatform.Infrastructure.Messaging.Consumers;
+using TodoPlatform.Infrastructure.Realtime;
 
 namespace TodoPlatform.Api.Extensions;
 
@@ -11,6 +12,9 @@ public static class MessagingExtensions
     public const string TodoCreatedEmailEndpoint = "todo-created-email";
     public const string TodoCompletedNotificationEndpoint = "todo-completed-notification";
     public const string TenantMigrationAppliedNotificationEndpoint = "tenant-migration-applied-notification";
+    public const string TodoCreatedSignalREndpoint = "todo-created-signalr";
+    public const string TodoUpdatedSignalREndpoint = "todo-updated-signalr";
+    public const string TodoDeletedSignalREndpoint = "todo-deleted-signalr";
 
     public static IServiceCollection AddApiMessaging(
         this IServiceCollection services,
@@ -24,7 +28,26 @@ public static class MessagingExtensions
         var options = configuration.GetSection(RabbitMqOptions.SectionName).Get<RabbitMqOptions>()
             ?? new RabbitMqOptions();
 
-        if (!options.Enabled || environment.IsEnvironment("Testing"))
+        if (environment.IsEnvironment("Testing"))
+        {
+            // In-memory bus so SignalR bridge can be integration-tested without RabbitMQ (B-13.6).
+            services.AddMassTransit(bus =>
+            {
+                bus.AddConsumer<TodoCreatedSignalRConsumer>();
+                bus.AddConsumer<TodoUpdatedSignalRConsumer>();
+                bus.AddConsumer<TodoDeletedSignalRConsumer>();
+
+                bus.UsingInMemory((context, cfg) =>
+                {
+                    cfg.ConfigureEndpoints(context);
+                });
+            });
+
+            services.AddHostedService<OutboxProcessor>();
+            return services;
+        }
+
+        if (!options.Enabled)
             return services;
 
         services.AddMassTransit(bus =>
@@ -32,6 +55,9 @@ public static class MessagingExtensions
             bus.AddConsumer<SendTodoCreatedEmailConsumer>();
             bus.AddConsumer<TodoCompletedNotificationConsumer>();
             bus.AddConsumer<TenantMigrationAppliedNotificationConsumer>();
+            bus.AddConsumer<TodoCreatedSignalRConsumer>();
+            bus.AddConsumer<TodoUpdatedSignalRConsumer>();
+            bus.AddConsumer<TodoDeletedSignalRConsumer>();
 
             bus.UsingRabbitMq((context, cfg) =>
             {
@@ -57,6 +83,24 @@ public static class MessagingExtensions
                 {
                     ConfigureRetry(e);
                     e.ConfigureConsumer<TenantMigrationAppliedNotificationConsumer>(context);
+                });
+
+                cfg.ReceiveEndpoint(TodoCreatedSignalREndpoint, e =>
+                {
+                    ConfigureRetry(e);
+                    e.ConfigureConsumer<TodoCreatedSignalRConsumer>(context);
+                });
+
+                cfg.ReceiveEndpoint(TodoUpdatedSignalREndpoint, e =>
+                {
+                    ConfigureRetry(e);
+                    e.ConfigureConsumer<TodoUpdatedSignalRConsumer>(context);
+                });
+
+                cfg.ReceiveEndpoint(TodoDeletedSignalREndpoint, e =>
+                {
+                    ConfigureRetry(e);
+                    e.ConfigureConsumer<TodoDeletedSignalRConsumer>(context);
                 });
             });
         });

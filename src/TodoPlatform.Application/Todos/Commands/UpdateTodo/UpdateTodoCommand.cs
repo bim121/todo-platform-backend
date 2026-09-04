@@ -23,6 +23,7 @@ public sealed class UpdateTodoHandler(
         try
         {
             request.Body.ApplyTo(todo);
+            todo.RecordUpdated();
             await repository.UpdateAsync(todo, cancellationToken);
 
             // Title/status updates may not raise domain events — invalidate explicitly.

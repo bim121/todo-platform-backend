@@ -56,7 +56,11 @@ public class Todo : Entity
     }
 
     public void MarkDeleted() =>
-        RaiseDomainEvent(new TodoDeletedEvent(Id, UserId, TenantId));
+        RaiseDomainEvent(new TodoDeletedEvent(Id, UserId, TenantId, Title, Completed));
+
+    /// <summary>Raise after a successful update so outbox/SignalR can broadcast (B-13.5).</summary>
+    public void RecordUpdated() =>
+        RaiseDomainEvent(new TodoUpdatedEvent(Id, UserId, TenantId, Title, Completed));
 
     public void UpdateTitle(string title)
     {
